@@ -228,8 +228,7 @@ int main(void)
 	size_t start_address, num_lists, bytes_per_list, type;
 
 	// Allocate memory for the command
-	char *command = malloc(COMMAND_SIZE * sizeof(char));
-	DIE(command == NULL, "Malloc failed while allocating command");
+	char command[COMMAND_SIZE];
 
 	while (1) {
 		// Read the command from the input
