@@ -17,7 +17,6 @@ typedef struct sfl_list_t {
 	sfl_node_t *head;
 	size_t size;
 	size_t element_size; // The size of the elements in the list
-	size_t free_blocks; // The number of free blocks in the list
 } sfl_list_t;
 
 // Structure for a node in the linked list
@@ -63,9 +62,6 @@ sfl_list_t *init_heap(size_t heap_start, size_t num_lists,
 		segregated_free_lists[i].size =
 			bytes_per_list / segregated_free_lists[i].element_size;
 
-		segregated_free_lists[i].free_blocks =
-			segregated_free_lists[i].size;
-
 		// Create the head node for the current list
 		sfl_node_t *previous = malloc(sizeof(sfl_node_t));
 		DIE(previous == NULL,
@@ -101,72 +97,101 @@ sfl_list_t *init_heap(size_t heap_start, size_t num_lists,
 	return segregated_free_lists;
 }
 
-void malloc_f(size_t size, sfl_list_t *lists, size_t num_lists,
+// Function to allocate memory using segregated free lists
+// Parameters:
+//   - size: The size of the memory to allocate
+//   - lists: Pointer to the array of segregated free lists
+//   - num_lists: Pointer to the number of segregated free lists
+//   - allocated_blocks: Pointer to the linked list of allocated blocks
+//   - fragmentations: Pointer to the count of fragmentations
+//   - malloc_calls: Pointer to the count of malloc calls
+void malloc_f(size_t size, sfl_list_t **lists, size_t *num_lists,
 	      ll_list_t *allocated_blocks, size_t *fragmentations,
-	      size_t bytes_per_list)
+	      size_t *malloc_calls)
 {
-	for (size_t i = 0; i < num_lists; i++) {
-		if (lists[i].element_size < size) {
+	// Find the list with the smallest element size that can store the
+	// requested size
+	for (size_t i = 0; i < *num_lists; i++) {
+		// If the current list is too small, continue
+		if ((*lists)[i].element_size < size) {
 			continue;
 		}
 
-		ll_node_t *current_ll = malloc(sizeof(ll_node_t));
-		DIE(current_ll == NULL, "Malloc failed while allocating node");
+		// Count valid malloc calls
+		*malloc_calls += 1;
 
-		// Set the data of the current node
-		current_ll->data = lists[i].head->data;
-		current_ll->size = size;
+		// Allocate memory for a new node in the allocated blocks list
+		ll_node_t *new_ll = malloc(sizeof(ll_node_t));
+		DIE(new_ll == NULL, "Malloc failed while allocating node");
 
-		// Add the current node to the allocated blocks list
-		current_ll->prev = NULL;
-		current_ll->next = allocated_blocks->head;
-		allocated_blocks->head = current_ll;
+		// Initialise the data of the current node
+		new_ll->data = (*lists)[i].head->data;
+		new_ll->size = size;
+		new_ll->next = NULL;
+		new_ll->prev = NULL;
+
+		// Move to the end of the list
+		ll_node_t *last_ll = allocated_blocks->head;
+		if (last_ll == NULL) {
+			allocated_blocks->head = new_ll;
+		} else {
+			while (last_ll->next != NULL) {
+				last_ll = last_ll->next;
+			}
+
+			// Add the current node to the allocated blocks list
+			last_ll->next = new_ll;
+			new_ll->prev = last_ll;
+			new_ll->next = NULL;
+		}
+
+		// Update the number of allocated blocks
 		allocated_blocks->size += 1;
 
 		// Remove the first node from the segregated free list
-		sfl_node_t *previous = lists[i].head;
-		lists[i].head = previous->next;
-		lists[i].head->prev = NULL;
+		sfl_node_t *first_sfl = (*lists)[i].head;
+		(*lists)[i].head = first_sfl->next;
+		(*lists)[i].head->prev = NULL;
+		(*lists)[i].size -= 1;
 
-		// Free the memory of the previous node
-		free(previous);
+		// Free the memory of the removed node
+		free(first_sfl);
 
-		// Update the number of free blocks in the list
-		lists[i].free_blocks -= 1;
-
-		if (lists[i].element_size == size) {
+		// Add the remaining memory to the next list
+		if ((*lists)[i].element_size == size) {
 			return;
 		} else {
+			// Count fragmentations
 			*fragmentations += 1;
 
-			sfl_node_t *current_sfl = malloc(sizeof(sfl_node_t));
-			DIE(current_sfl == NULL,
+			// Allocate memory for a new node in the segregated free list
+			sfl_node_t *new_sfl = malloc(sizeof(sfl_node_t));
+			DIE(new_sfl == NULL,
 			    "Malloc failed while allocating node");
 
 			// Set the data of the current node
-			current_sfl->data =
-				(void *)((size_t)current_ll->data + size);
+			new_sfl->data = (void *)((size_t)new_ll->data + size);
 
-			// Add the remaining memory to the next list
-			size_t remaining_size = lists[i].element_size - size;
+			// Calculate the remaining memory
+			size_t remaining_size = (*lists)[i].element_size - size;
 
-			for (size_t j = 0; j < num_lists; j++) {
-				if (lists[j].element_size == remaining_size) {
-					// Add the remaining memory to the next list
-
+			// Find the list which mathces the remaining size
+			for (size_t j = 0; j < *num_lists; j++) {
+				if ((*lists)[j].element_size ==
+				    remaining_size) {
 					// Move to the end of the list
-					sfl_node_t *previous = lists[j].head;
-					while (previous->next != NULL) {
-						previous = previous->next;
+					sfl_node_t *last_sfl = (*lists)[j].head;
+					while (last_sfl->next != NULL) {
+						last_sfl = last_sfl->next;
 					}
 
-					// Connect the current node to the previous one
-					previous->next = current_sfl;
-					current_sfl->prev = previous;
-					current_sfl->next = NULL;
+					// Connect the new node to the last one
+					last_sfl->next = new_sfl;
+					new_sfl->prev = last_sfl;
+					new_sfl->next = NULL;
 
 					// Update the number of free blocks in the list
-					lists[j].free_blocks += 1;
+					(*lists)[j].size += 1;
 
 					return;
 				}
@@ -174,39 +199,44 @@ void malloc_f(size_t size, sfl_list_t *lists, size_t num_lists,
 
 			// If there is no list with the remaining size, add a new list
 
-			lists = realloc(lists,
-					(num_lists + 1) * sizeof(sfl_list_t));
-			DIE(lists == NULL,
+			// Update the number of lists
+			*num_lists += 1;
+			*lists = realloc(*lists,
+					 *num_lists * sizeof(sfl_list_t));
+			DIE(*lists == NULL,
 			    "Realloc failed while reallocating lists");
 
 			// Find the index of the new list
-			for (size_t j = 0; j < num_lists; j++) {
-				if (lists[j].element_size > size) {
+			for (size_t j = 0; j < *num_lists; j++) {
+				if ((*lists)[j].element_size > remaining_size) {
 					// Move the lists to the right
-					for (size_t k = num_lists - 1; k > j;
+					for (size_t k = *num_lists - 1; k > j;
 					     k--) {
-						lists[k] = lists[k - 1];
+						(*lists)[k] = (*lists)[k - 1];
 					}
 
-					// Add the new list
-					lists[j].element_size = remaining_size;
-					lists[j].size =
-						bytes_per_list / remaining_size;
-					lists[j].free_blocks = 1;
-					lists[j].head = current_sfl;
+					// Add and initialise the new list
+					(*lists)[j].element_size =
+						remaining_size;
+					(*lists)[j].size = remaining_size;
+					(*lists)[j].size = 1;
+					(*lists)[j].head = new_sfl;
+					new_sfl->next = NULL;
+					new_sfl->prev = NULL;
 
 					return;
 				}
 			}
 		}
 	}
+
+	// If there is no list with enough memory, print an error message
+	printf("Out of memory\n");
 }
 
 // Function to dump the memory statistics
 // Parameters:
 //   - num_lists: The number of segregated free lists
-//   - bytes_per_list: The number of bytes per list
-//   - allocated_memory: The total allocated memory
 //   - malloc_calls: The number of malloc calls
 //   - fragmentations: The number of fragmentations
 //   - free_calls: The number of free calls
@@ -214,17 +244,16 @@ void malloc_f(size_t size, sfl_list_t *lists, size_t num_lists,
 //   - allocated_blocks: The linked list of allocated blocks
 //   - start_address: The starting address of the heap
 //   - data: Pointer to the allocated memory for the heap
-void dump_memory(size_t num_lists, size_t bytes_per_list, size_t malloc_calls,
-		 size_t fragmentations, size_t free_calls,
-		 sfl_list_t *segregated_free_lists, ll_list_t allocated_blocks,
-		 size_t start_address, void *data)
+void dump_memory(size_t num_lists, size_t malloc_calls, size_t fragmentations,
+		 size_t free_calls, sfl_list_t *segregated_free_lists,
+		 ll_list_t allocated_blocks, size_t start_address, void *data)
 {
 	printf("+++++DUMP+++++\n");
 
 	// Calculate the number of free blocks
 	size_t free_blocks = 0;
 	for (size_t i = 0; i < num_lists; i++) {
-		free_blocks += segregated_free_lists[i].free_blocks;
+		free_blocks += segregated_free_lists[i].size;
 	}
 
 	// Calculate the total allocated memory
@@ -234,21 +263,24 @@ void dump_memory(size_t num_lists, size_t bytes_per_list, size_t malloc_calls,
 		allocated_memory += current->size;
 	}
 
+	// Calculate the total free memory
+	size_t free_memory = 0;
+	for (size_t i = 0; i < num_lists; i++) {
+		free_memory += segregated_free_lists[i].size *
+			       segregated_free_lists[i].element_size;
+	}
+
 	// Print the total memory, total allocated memory, total free memory,
 	// number of free blocks, number of allocated blocks, number of malloc
 	// calls, number of fragmentations, and number of free calls
 
-	printf("Total memory: %lu bytes\n", num_lists * bytes_per_list);
+	printf("Total memory: %lu bytes\n", free_memory + allocated_memory);
 	printf("Total allocated memory: %lu bytes\n", allocated_memory);
-	printf("Total free memory: %lu bytes\n",
-	       (num_lists * bytes_per_list - allocated_memory));
+	printf("Total free memory: %lu bytes\n", free_memory);
 	printf("Number of free blocks: %lu\n", free_blocks);
 
 	// Formula: (bytes_per_list / 8) * ((2^num_lists - 1) / 2^(num_lists - 1))
-	printf("Number of allocated blocks: %lu\n",
-	       (bytes_per_list / 8) / (1 << (num_lists - 1)) *
-			       ((1 << (num_lists)) - 1) -
-		       free_blocks);
+	printf("Number of allocated blocks: %lu\n", malloc_calls - free_calls);
 
 	printf("Number of malloc calls: %lu\n", malloc_calls);
 	printf("Number of fragmentations: %lu\n", fragmentations);
@@ -258,7 +290,7 @@ void dump_memory(size_t num_lists, size_t bytes_per_list, size_t malloc_calls,
 	for (size_t i = 0; i < num_lists; i++) {
 		printf("Blocks with %lu bytes - %lu free block(s) : ",
 		       segregated_free_lists[i].element_size,
-		       segregated_free_lists[i].free_blocks);
+		       segregated_free_lists[i].size);
 
 		// Print the addresses of the free blocks
 		if (segregated_free_lists[i].head) {
@@ -294,6 +326,7 @@ void dump_memory(size_t num_lists, size_t bytes_per_list, size_t malloc_calls,
 //   - segregated_free_lists: The array of segregated free lists
 //   - num_lists: The number of segregated free lists
 //   - data: Pointer to the allocated memory for the heap
+//   - allocated_blocks: Linked list of allocated blocks
 void destroy_heap(sfl_list_t *segregated_free_lists, size_t num_lists,
 		  void *data, ll_list_t allocated_blocks)
 {
@@ -354,18 +387,15 @@ int main(void)
 					 bytes_per_list, &data);
 		} else if (!strcmp(command, "DUMP_MEMORY")) {
 			// Dump the memory statistics
-			dump_memory(num_lists, bytes_per_list, malloc_calls,
-				    fragmentations, free_calls, list,
-				    allocated_blocks, start_address, data);
+			dump_memory(num_lists, malloc_calls, fragmentations,
+				    free_calls, list, allocated_blocks,
+				    start_address, data);
 		} else if (!strcmp(command, "MALLOC")) {
 			// Read the size of the block to be allocated
 			scanf("%lu", &size);
 
-			// Count the number of malloc calls
-			malloc_calls += 1;
-
-			malloc_f(size, list, num_lists, &allocated_blocks,
-				 &fragmentations, bytes_per_list);
+			malloc_f(size, &list, &num_lists, &allocated_blocks,
+				 &fragmentations, &malloc_calls);
 		} else if (!strcmp(command, "DESTROY_HEAP")) {
 			// Destroy the heap
 			destroy_heap(list, num_lists, data, allocated_blocks);
