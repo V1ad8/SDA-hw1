@@ -23,7 +23,6 @@ typedef struct sfl_list_t {
 // Structure for a node in the linked list
 typedef struct ll_node_t {
 	void *data;
-	size_t element_size; // The size of the elements in the current block
 	size_t size; // The number of elements stored in the current block
 	struct ll_node_t *next, *prev;
 } ll_node_t;
@@ -116,8 +115,7 @@ void malloc_f(size_t size, sfl_list_t *lists, size_t num_lists,
 
 		// Set the data of the current node
 		current_ll->data = lists[i].head->data;
-		current_ll->element_size = size;
-		current_ll->size = 1;
+		current_ll->size = size;
 
 		// Add the current node to the allocated blocks list
 		current_ll->prev = NULL;
@@ -227,17 +225,17 @@ void dump_memory(size_t num_lists, size_t bytes_per_list, size_t malloc_calls,
 	size_t allocated_memory = 0;
 	for (ll_node_t *current = allocated_blocks.head; current != NULL;
 	     current = current->next) {
-		allocated_memory += current->size * current->element_size;
+		allocated_memory += current->size;
 	}
 
 	// Print the total memory, total allocated memory, total free memory,
 	// number of free blocks, number of allocated blocks, number of malloc
 	// calls, number of fragmentations, and number of free calls
 
-	printf("Total memory: %lu bytes\n", num_lists * bytes_per_list);
-	printf("Total allocated memory: %lu bytes\n", allocated_memory);
+	printf("Total memory: %lu bytes\n", num_lists * bytes_per_list >> 3);
+	printf("Total allocated memory: %lu bytes\n", allocated_memory >> 3);
 	printf("Total free memory: %lu bytes\n",
-	       num_lists * bytes_per_list - allocated_memory);
+	       (num_lists * bytes_per_list - allocated_memory) >> 3);
 	printf("Number of free blocks: %lu\n", free_blocks);
 
 	// Formula: (bytes_per_list / 8) * ((2^num_lists - 1) / 2^(num_lists - 1))
@@ -253,7 +251,7 @@ void dump_memory(size_t num_lists, size_t bytes_per_list, size_t malloc_calls,
 	// Print blocks with their respective sizes and number of free blocks
 	for (size_t i = 0; i < num_lists; i++) {
 		printf("Blocks with %lu bytes - %lu free block(s) : ",
-		       segregated_free_lists[i].element_size,
+		       segregated_free_lists[i].element_size >> 3,
 		       segregated_free_lists[i].free_blocks);
 
 		// Print the addresses of the free blocks
@@ -275,8 +273,10 @@ void dump_memory(size_t num_lists, size_t bytes_per_list, size_t malloc_calls,
 	if (allocated_blocks.head) {
 		for (ll_node_t *current = allocated_blocks.head;
 		     current != NULL; current = current->next) {
-			printf("0x%lx ", (size_t)current->data - (size_t)data +
-						 start_address);
+			printf("(0x%lx - %lu) ",
+			       (size_t)current->data - (size_t)data +
+				       start_address,
+			       current->size >> 3);
 		}
 	}
 
