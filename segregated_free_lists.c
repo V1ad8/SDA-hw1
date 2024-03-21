@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "utils.h"
+
+#define COMMAND_SIZE 100
 
 // Structure for a node in the segregated free list
 typedef struct sfl_node_t {
@@ -105,16 +108,22 @@ sfl_list_t *init_heap(size_t heap_start, size_t num_lists,
 //   - free_calls: The number of free calls
 //   - segregated_free_lists: The array of segregated free lists
 //   - allocated_blocks: The linked list of allocated blocks
-void dump_memory(size_t num_lists, size_t bytes_per_list,
-		 size_t allocated_memory, size_t malloc_calls,
+void dump_memory(size_t num_lists, size_t bytes_per_list, size_t malloc_calls,
 		 size_t fragmentations, size_t free_calls,
-		 sfl_list_t *segregated_free_lists, ll_list_t allocated_blocks)
+		 sfl_list_t *segregated_free_lists, ll_list_t allocated_blocks,
+		 size_t start_address, void *data)
 {
 	printf("+++++DUMP+++++\n");
 
 	size_t free_blocks = 0;
 	for (size_t i = 0; i < num_lists; i++) {
 		free_blocks += segregated_free_lists[i].free_blocks;
+	}
+
+	size_t allocated_memory = 0;
+	for (ll_node_t *current = allocated_blocks.head; current != NULL;
+	     current = current->next) {
+		allocated_memory += current->size;
 	}
 
 	// Print the total memory, total allocated memory, total free memory,
@@ -141,13 +150,13 @@ void dump_memory(size_t num_lists, size_t bytes_per_list,
 		       segregated_free_lists[i].free_blocks);
 
 		// Print the addresses of the free blocks
-		if (segregated_free_lists[i].head->next == NULL) {
-			printf("None");
-		} else {
+		if (segregated_free_lists[i].head->next) {
 			for (sfl_node_t *current =
 				     segregated_free_lists[i].head->next;
 			     current != NULL; current = current->next) {
-				printf("%p ", current->data);
+				printf("0x%lx ", (size_t)current->data -
+							 (size_t)data +
+							 start_address);
 			}
 		}
 
@@ -156,12 +165,11 @@ void dump_memory(size_t num_lists, size_t bytes_per_list,
 
 	// Print the addresses of the allocated blocks
 	printf("Allocated blocks : ");
-	if (allocated_blocks.head == NULL) {
-		printf("None");
-	} else {
+	if (allocated_blocks.head) {
 		for (ll_node_t *current = allocated_blocks.head;
 		     current != NULL; current = current->next) {
-			printf("(%p ", current->data);
+			printf("0x%lx ", (size_t)current->data - (size_t)data +
+						 start_address);
 		}
 	}
 
@@ -190,24 +198,37 @@ void destroy_heap(sfl_list_t *segregated_free_lists, size_t num_lists,
 
 int main()
 {
-	// Initialize the heap
-
+	sfl_list_t *list = NULL;
 	void *data = NULL;
 
-	sfl_list_t *list = init_heap(0, 4, 64, &data);
+	size_t malloc_calls = 0;
+	size_t free_calls = 0;
+	size_t fragmentations = 0;
 
-	ll_list_t allocated_blocks;
+	size_t start_address, num_lists, bytes_per_list, type;
+	ll_list_t allocated_blocks = { NULL, 0 };
 
-	allocated_blocks.head = NULL;
-	allocated_blocks.size = 0;
+	char *command = malloc(COMMAND_SIZE * sizeof(char));
+	DIE(command == NULL, "Malloc failed while allocating command");
 
-	// Dump the memory
-	dump_memory(4, 64, 0, 0, 0, 0, list, allocated_blocks);
+	while (1) {
+		scanf("%s", command);
 
-	printf("%p\n", data);
+		if (!strcmp(command, "INIT_HEAP")) {
+			scanf("%lu %lu %lu %lu", &start_address, &num_lists,
+			      &bytes_per_list, &type);
 
-	// Free the memory of the heap
-	destroy_heap(list, 4, data);
+			list = init_heap(start_address, num_lists,
+					 bytes_per_list, &data);
+		} else if (!strcmp(command, "DUMP_MEMORY")) {
+			dump_memory(num_lists, bytes_per_list, malloc_calls,
+				    fragmentations, free_calls, list,
+				    allocated_blocks, start_address, data);
+		} else if (!strcmp(command, "DESTROY_HEAP")) {
+			destroy_heap(list, num_lists, data);
+			break;
+		}
+	}
 
 	return 0;
 }
