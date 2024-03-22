@@ -249,15 +249,6 @@ void simple_free(size_t address, ll_list_t *allocated_blocks,
 		 sfl_list_t **lists, size_t *num_lists, void *data,
 		 size_t start_address, size_t *free_calls)
 {
-	// Check if the address is NULL
-	if (address == 0) {
-		// Count free calls
-		*free_calls += 1;
-
-		// Do nothing for free(NULL)
-		return;
-	}
-
 	// Find the block with the given address
 	for (ll_node_t *current_ll = allocated_blocks->head; current_ll;
 	     current_ll = current_ll->next) {
@@ -358,8 +349,63 @@ void simple_free(size_t address, ll_list_t *allocated_blocks,
 		}
 	}
 
+	// Check if the address is NULL
+	if (address == 0) {
+		// Count free calls
+		*free_calls += 1;
+
+		// Do nothing for free(NULL)
+		return;
+	}
+
 	// If the address is not found, print an error message
 	printf("Invalid free\n");
+}
+
+// Function to read a block of memory
+//
+// Parameters:
+//   - allocated_blocks: Pointer to the linked list of allocated blocks
+//   - address: The address of the block to be read
+//   - size: The size of the block to be read
+//   - data: Pointer to the allocated memory for the heap
+//   - start_address: The starting address of the heap
+void read(ll_list_t *allocated_blocks, size_t address, size_t size, void *data,
+	  size_t start_address)
+{
+	// Allocate memory for the block
+	char *block = malloc(size);
+	DIE(block == NULL, "Malloc failed while allocating block");
+
+	// Make an index for the block
+	size_t j = 0;
+
+	// Find the block with the given address
+	for (ll_node_t *current = allocated_blocks->head; current != NULL;
+	     current = current->next) {
+		if (address ==
+		    (size_t)current->data - (size_t)data + start_address) {
+			// Copy the data from the block to the allocated memory
+			for (size_t i = 0; i < size && i < current->size; i++) {
+				block[j++] = *((char *)current->data + i);
+			}
+
+			// Update the size and address
+			size -= current->size;
+			address += current->size;
+
+			// Check if the block is read completely
+			if (size == 0) {
+				printf("%s\n", block);
+				free(block);
+				return;
+			}
+		}
+	}
+
+	// If the address is not found, print an error message
+	printf("Segmentation fault (core dumped)\n");
+	free(block);
 }
 
 // Function to dump the memory statistics
@@ -535,6 +581,13 @@ int main(void)
 					    &num_lists, data, start_address,
 					    &free_calls);
 			}
+		} else if (!strcmp(command, "READ")) {
+			// Read the address and the size of the block to be read
+			scanf("%lx %lu", &address, &size);
+
+			// Read the block
+			read(&allocated_blocks, address, size, data,
+			     start_address);
 		} else if (!strcmp(command, "DESTROY_HEAP")) {
 			// Destroy the heap
 			destroy_heap(list, num_lists, data, allocated_blocks);
