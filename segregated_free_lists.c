@@ -250,10 +250,14 @@ void malloc_f(size_t size, sfl_list_t **lists, size_t *num_lists,
 //   - start_address: The starting address of the heap
 void simple_free(size_t address, ll_list_t *allocated_blocks,
 		 sfl_list_t **lists, size_t *num_lists, void *data,
-		 size_t start_address)
+		 size_t start_address, size_t *free_calls)
 {
 	// Check if the address is NULL
 	if (address == 0) {
+		// Count free calls
+		*free_calls += 1;
+
+		// Do nothing for free(NULL)
 		return;
 	}
 
@@ -262,6 +266,9 @@ void simple_free(size_t address, ll_list_t *allocated_blocks,
 	     current_ll = current_ll->next) {
 		if (address == (size_t)((char *)current_ll->data -
 					(char *)data + start_address)) {
+			// Count the number of free calls for valid calls
+			*free_calls += 1;
+
 			// Remove the current node from the allocated blocks list
 			if (current_ll->prev) {
 				current_ll->prev->next = current_ll->next;
@@ -310,6 +317,7 @@ void simple_free(size_t address, ll_list_t *allocated_blocks,
 
 					// Free the memory of the freed node
 					free(current_ll);
+
 					return;
 				}
 			}
@@ -346,6 +354,7 @@ void simple_free(size_t address, ll_list_t *allocated_blocks,
 
 					// Free the memory of the freed node
 					free(current_ll);
+
 					return;
 				}
 			}
@@ -492,7 +501,8 @@ int main(void)
 	size_t fragmentations = 0;
 
 	// Initialize the variables for the input
-	size_t start_address, num_lists, bytes_per_list, type, size, address;
+	size_t start_address, num_lists, bytes_per_list, reconstruct, size,
+		address;
 
 	// Allocate memory for the command
 	char command[COMMAND_SIZE];
@@ -504,7 +514,7 @@ int main(void)
 		if (!strcmp(command, "INIT_HEAP")) {
 			// Read the parameters for the INIT_HEAP command
 			scanf("%lx %lu %lu %lu", &start_address, &num_lists,
-			      &bytes_per_list, &type);
+			      &bytes_per_list, &reconstruct);
 
 			// Initialize the heap
 			list = init_heap(start_address, num_lists,
@@ -524,9 +534,13 @@ int main(void)
 			// Read the address of the block to be freed
 			scanf("%lx", &address);
 
-			simple_free(address, &allocated_blocks, &list,
-				    &num_lists, data, start_address);
-			free_calls += 1;
+			// Free the memory of the block
+			if (reconstruct) {
+			} else {
+				simple_free(address, &allocated_blocks, &list,
+					    &num_lists, data, start_address,
+					    &free_calls);
+			}
 		} else if (!strcmp(command, "DESTROY_HEAP")) {
 			// Destroy the heap
 			destroy_heap(list, num_lists, data, allocated_blocks);
