@@ -53,38 +53,34 @@ sfl_list_t *init_heap(size_t heap_start, size_t num_lists,
 	heap_start = (size_t)*data;
 
 	// Allocate memory for the segregated free lists
-	sfl_list_t *segregated_free_lists =
-		malloc(sizeof(sfl_list_t) * num_lists);
-	DIE(segregated_free_lists == NULL,
-	    "Malloc failed while allocating segregated_free_lists");
+	sfl_list_t *lists = malloc(sizeof(sfl_list_t) * num_lists);
+	DIE(lists == NULL, "Malloc failed while allocating lists");
 
 	// Initialize each segregated free list
 	for (size_t i = 0; i < num_lists; i++) {
 		// Calculate the element size and size of the current list
-		segregated_free_lists[i].element_size = 8 * (1 << i);
+		lists[i].element_size = 8 * (1 << i);
 
-		segregated_free_lists[i].size =
-			bytes_per_list / segregated_free_lists[i].element_size;
+		lists[i].size = bytes_per_list / lists[i].element_size;
 
 		// Create the head node for the current list
 		sfl_node_t *previous = malloc(sizeof(sfl_node_t));
 		DIE(previous == NULL,
-		    "Malloc failed while allocating node for segregated_free_lists[i]");
-		segregated_free_lists[i].head = previous;
+		    "Malloc failed while allocating node for lists[i]");
+		lists[i].head = previous;
 		previous->data = (void *)(heap_start + i * bytes_per_list);
 		previous->prev = NULL;
 
 		// Create the remaining nodes for the current list
-		for (size_t j = 1; j < segregated_free_lists[i].size; j++) {
+		for (size_t j = 1; j < lists[i].size; j++) {
 			sfl_node_t *current = malloc(sizeof(sfl_node_t));
 			DIE(current == NULL,
-			    "Malloc failed while allocating node for segregated_free_lists[i]");
+			    "Malloc failed while allocating node for lists[i]");
 
 			// Set the data of the current node
 			current->data =
 				(void *)(heap_start + i * bytes_per_list +
-					 j * segregated_free_lists[i]
-							 .element_size);
+					 j * lists[i].element_size);
 
 			// Connect the current node to the previous one
 			previous->next = current;
@@ -98,7 +94,7 @@ sfl_list_t *init_heap(size_t heap_start, size_t num_lists,
 		previous->next = NULL;
 	}
 
-	return segregated_free_lists;
+	return lists;
 }
 
 // Function to allocate memory using segregated free lists
@@ -248,6 +244,7 @@ void malloc_f(size_t size, sfl_list_t **lists, size_t *num_lists,
 //   - num_lists: Pointer to the number of segregated free lists
 //   - data: Pointer to the allocated memory for the heap
 //   - start_address: The starting address of the heap
+//   - free_calls: Pointer to the counter for the number of free calls
 void simple_free(size_t address, ll_list_t *allocated_blocks,
 		 sfl_list_t **lists, size_t *num_lists, void *data,
 		 size_t start_address, size_t *free_calls)
@@ -372,12 +369,12 @@ void simple_free(size_t address, ll_list_t *allocated_blocks,
 //   - malloc_calls: The number of malloc calls
 //   - fragmentations: The number of fragmentations
 //   - free_calls: The number of free calls
-//   - segregated_free_lists: The array of segregated free lists
+//   - lists: The array of segregated free lists
 //   - allocated_blocks: The linked list of allocated blocks
 //   - start_address: The starting address of the heap
 //   - data: Pointer to the allocated memory for the heap
 void dump_memory(size_t num_lists, size_t malloc_calls, size_t fragmentations,
-		 size_t free_calls, sfl_list_t *segregated_free_lists,
+		 size_t free_calls, sfl_list_t *lists,
 		 ll_list_t allocated_blocks, size_t start_address, void *data)
 {
 	printf("+++++DUMP+++++\n");
@@ -385,7 +382,7 @@ void dump_memory(size_t num_lists, size_t malloc_calls, size_t fragmentations,
 	// Calculate the number of free blocks
 	size_t free_blocks = 0;
 	for (size_t i = 0; i < num_lists; i++) {
-		free_blocks += segregated_free_lists[i].size;
+		free_blocks += lists[i].size;
 	}
 
 	// Calculate the total allocated memory
@@ -398,8 +395,7 @@ void dump_memory(size_t num_lists, size_t malloc_calls, size_t fragmentations,
 	// Calculate the total free memory
 	size_t free_memory = 0;
 	for (size_t i = 0; i < num_lists; i++) {
-		free_memory += segregated_free_lists[i].size *
-			       segregated_free_lists[i].element_size;
+		free_memory += lists[i].size * lists[i].element_size;
 	}
 
 	// Print the total memory, total allocated memory, total free memory,
@@ -421,13 +417,11 @@ void dump_memory(size_t num_lists, size_t malloc_calls, size_t fragmentations,
 	// Print blocks with their respective sizes and number of free blocks
 	for (size_t i = 0; i < num_lists; i++) {
 		printf("Blocks with %lu bytes - %lu free block(s) : ",
-		       segregated_free_lists[i].element_size,
-		       segregated_free_lists[i].size);
+		       lists[i].element_size, lists[i].size);
 
 		// Print the addresses of the free blocks
-		if (segregated_free_lists[i].head) {
-			for (sfl_node_t *current =
-				     segregated_free_lists[i].head;
+		if (lists[i].head) {
+			for (sfl_node_t *current = lists[i].head;
 			     current != NULL; current = current->next) {
 				printf("0x%lx ", (size_t)current->data -
 							 (size_t)data +
@@ -456,16 +450,16 @@ void dump_memory(size_t num_lists, size_t malloc_calls, size_t fragmentations,
 // Function to free the memory of the heap
 //
 // Parameters:
-//   - segregated_free_lists: The array of segregated free lists
+//   - lists: The array of segregated free lists
 //   - num_lists: The number of segregated free lists
 //   - data: Pointer to the allocated memory for the heap
 //   - allocated_blocks: Linked list of allocated blocks
-void destroy_heap(sfl_list_t *segregated_free_lists, size_t num_lists,
-		  void *data, ll_list_t allocated_blocks)
+void destroy_heap(sfl_list_t *lists, size_t num_lists, void *data,
+		  ll_list_t allocated_blocks)
 {
 	// Free the memory of the segregated free lists nodes
 	for (size_t i = 0; i < num_lists; i++) {
-		sfl_node_t *current = segregated_free_lists[i].head;
+		sfl_node_t *current = lists[i].head;
 		while (current != NULL) {
 			sfl_node_t *next = current->next;
 			free(current);
@@ -482,7 +476,7 @@ void destroy_heap(sfl_list_t *segregated_free_lists, size_t num_lists,
 	}
 
 	// Free the memory of the segregated free lists
-	free(segregated_free_lists);
+	free(lists);
 
 	// Free the memory of the heap
 	free(data);
