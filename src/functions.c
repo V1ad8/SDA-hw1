@@ -67,7 +67,7 @@ void malloc_f(size_t size, sfl_list_t **lists, size_t *num_lists,
 	// requested size
 	for (size_t i = 0; i < *num_lists; i++) {
 		// If the current list is too small, continue
-		if ((*lists)[i].element_size < size) {
+		if ((*lists)[i].element_size < size || (*lists)[i].size == 0) {
 			continue;
 		}
 
@@ -86,24 +86,19 @@ void malloc_f(size_t size, sfl_list_t **lists, size_t *num_lists,
 
 		// Move to the end of the list
 		ll_node_t *last_ll = allocated_blocks->head;
-		if (last_ll == NULL) {
+		if (last_ll == NULL || last_ll->data > new_ll->data) {
+			new_ll->next = last_ll;
 			allocated_blocks->head = new_ll;
 		} else {
-			/*
 			while (last_ll->next != NULL &&
-			       last_ll->data < new_ll->data) {
+			       last_ll->next->data < new_ll->data) {
 				last_ll = last_ll->next;
 			}
-			*/
-
-			last_ll->prev = new_ll;
-			new_ll->next = last_ll;
-
-			allocated_blocks->head = new_ll;
 
 			// Add the current node to the allocated blocks list
-			// last_ll->next = new_ll;
-			// new_ll->prev = last_ll;
+			new_ll->next = last_ll->next;
+			last_ll->next = new_ll;
+			new_ll->prev = last_ll;
 		}
 
 		// Update the number of allocated blocks
@@ -112,7 +107,7 @@ void malloc_f(size_t size, sfl_list_t **lists, size_t *num_lists,
 		// Remove the first node from the segregated free list
 		sfl_node_t *first_sfl = (*lists)[i].head;
 		(*lists)[i].head = first_sfl->next;
-		(*lists)[i].head->prev = NULL;
+		// (*lists)[i].head->prev = NULL;
 		(*lists)[i].size -= 1;
 
 		// Free the memory of the removed node
