@@ -89,14 +89,21 @@ void malloc_f(size_t size, sfl_list_t **lists, size_t *num_lists,
 		if (last_ll == NULL) {
 			allocated_blocks->head = new_ll;
 		} else {
-			while (last_ll->next != NULL) {
+			/*
+			while (last_ll->next != NULL &&
+			       last_ll->data < new_ll->data) {
 				last_ll = last_ll->next;
 			}
+			*/
+
+			last_ll->prev = new_ll;
+			new_ll->next = last_ll;
+
+			allocated_blocks->head = new_ll;
 
 			// Add the current node to the allocated blocks list
-			last_ll->next = new_ll;
-			new_ll->prev = last_ll;
-			new_ll->next = NULL;
+			// last_ll->next = new_ll;
+			// new_ll->prev = last_ll;
 		}
 
 		// Update the number of allocated blocks
@@ -228,20 +235,35 @@ void simple_free(size_t address, ll_list_t *allocated_blocks,
 					// Set the data of the current node
 					new_sfl->data = current_ll->data;
 
-					// Move to the appropriate position
-					sfl_node_t *previous_sfl =
-						(*lists)[i].head;
-					while (previous_sfl->next != NULL &&
-					       previous_sfl->data <
-						       new_sfl->data) {
-						previous_sfl =
-							previous_sfl->next;
-					}
+					// Check if the new node is the first one
+					if (new_sfl->data <
+					    (*lists)[i].head->data) {
+						// Connect the new node to the first one
+						new_sfl->next =
+							(*lists)[i].head;
+						new_sfl->prev = NULL;
+						(*lists)[i].head->prev =
+							new_sfl;
+						(*lists)[i].head = new_sfl;
+					} else {
+						// Move to the appropriate position
+						sfl_node_t *previous_sfl =
+							(*lists)[i].head;
+						while (previous_sfl->next !=
+							       NULL &&
+						       previous_sfl->data <
+							       new_sfl->data) {
+							previous_sfl =
+								previous_sfl
+									->next;
+						}
 
-					// Connect the new node to the last one
-					new_sfl->prev = previous_sfl;
-					new_sfl->next = previous_sfl->next;
-					previous_sfl->next = new_sfl;
+						// Connect the new node to the last one
+						new_sfl->prev = previous_sfl;
+						new_sfl->next =
+							previous_sfl->next;
+						previous_sfl->next = new_sfl;
+					}
 
 					// Update the number of free blocks in the list
 					(*lists)[i].size += 1;
@@ -449,9 +471,14 @@ void dump_memory(size_t num_lists, size_t malloc_calls, size_t fragmentations,
 		if (lists[i].head) {
 			for (sfl_node_t *current = lists[i].head;
 			     current != NULL; current = current->next) {
-				printf("0x%lx ", (size_t)current->data -
-							 (size_t)data +
-							 start_address);
+				printf("0x%lx", (size_t)current->data -
+							(size_t)data +
+							start_address);
+
+				// Print a space if there are more blocks
+				if (current->next) {
+					printf(" ");
+				}
 			}
 		}
 
@@ -463,10 +490,15 @@ void dump_memory(size_t num_lists, size_t malloc_calls, size_t fragmentations,
 	if (allocated_blocks.head) {
 		for (ll_node_t *current = allocated_blocks.head;
 		     current != NULL; current = current->next) {
-			printf("(0x%lx - %lu) ",
+			printf("(0x%lx - %lu)",
 			       (size_t)current->data - (size_t)data +
 				       start_address,
 			       current->size);
+
+			// Print a space if there are more blocks
+			if (current->next) {
+				printf(" ");
+			}
 		}
 	}
 

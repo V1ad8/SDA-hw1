@@ -92,6 +92,10 @@ void dump_memory(size_t num_lists, size_t malloc_calls, size_t fragmentations,
 void destroy_heap(sfl_list_t *lists, size_t num_lists, void *heap,
 		  ll_list_t allocated_blocks);
 
+// Function to remove the quotation marks from a string
+//
+// Parameters:
+//   - string: The string to remove the quotation marks from
 void remove_quotation_marks(char *string);
 
 #endif /* HEADER_H_ */
