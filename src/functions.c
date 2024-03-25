@@ -1,47 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include "header.h"
 #include "utils.h"
 
-// The size of the command from the input
-#define COMMAND_SIZE 100
-
-// Structure for a node in the segregated free list
-typedef struct sfl_node_t {
-	void *data;
-	struct sfl_node_t *next, *prev;
-} sfl_node_t;
-
-// Structure for a segregated free list
-typedef struct sfl_list_t {
-	sfl_node_t *head;
-	size_t size;
-	size_t element_size; // The size of the elements in the list
-} sfl_list_t;
-
-// Structure for a node in the linked list
-typedef struct ll_node_t {
-	void *data;
-	size_t size; // The number of elements stored in the current block
-	struct ll_node_t *next, *prev;
-} ll_node_t;
-
-// Structure for a linked list
-typedef struct ll_list_t {
-	ll_node_t *head;
-	size_t size;
-} ll_list_t;
-
-// Function to initialize the heap
-//
-// Parameters:
-//	 - heap_start: The starting address of the heap
-//	 - num_lists: The number of segregated free lists
-//	 - bytes_per_list: The number of bytes per list
-//	 - data: Pointer to store the allocated memory for the heap
-//
-// Returns:
-//	 - The array of segregated free lists
 sfl_list_t *init_heap(size_t heap_start, size_t num_lists,
 		      size_t bytes_per_list, void **data)
 {
@@ -97,15 +58,6 @@ sfl_list_t *init_heap(size_t heap_start, size_t num_lists,
 	return lists;
 }
 
-// Function to allocate memory using segregated free lists
-//
-// Parameters:
-//   - size: The size of the memory to allocate
-//   - lists: Pointer to the array of segregated free lists
-//   - num_lists: Pointer to the number of segregated free lists
-//   - allocated_blocks: Pointer to the linked list of allocated blocks
-//   - fragmentations: Pointer to the count of fragmentations
-//   - malloc_calls: Pointer to the count of malloc calls
 void malloc_f(size_t size, sfl_list_t **lists, size_t *num_lists,
 	      ll_list_t *allocated_blocks, size_t *fragmentations,
 	      size_t *malloc_calls)
@@ -235,16 +187,6 @@ void malloc_f(size_t size, sfl_list_t **lists, size_t *num_lists,
 	printf("Out of memory\n");
 }
 
-// Function to free memory using segregated free lists
-//
-// Parameters:
-//   - address: The address of the block to be freed
-//   - allocated_blocks: Pointer to the linked list of allocated blocks
-//   - lists: Pointer to the array of segregated free lists
-//   - num_lists: Pointer to the number of segregated free lists
-//   - data: Pointer to the allocated memory for the heap
-//   - start_address: The starting address of the heap
-//   - free_calls: Pointer to the counter for the number of free calls
 void simple_free(size_t address, ll_list_t *allocated_blocks,
 		 sfl_list_t **lists, size_t *num_lists, void *data,
 		 size_t start_address, size_t *free_calls)
@@ -362,14 +304,6 @@ void simple_free(size_t address, ll_list_t *allocated_blocks,
 	printf("Invalid free\n");
 }
 
-// Function to read a block of memory
-//
-// Parameters:
-//   - allocated_blocks: Pointer to the linked list of allocated blocks
-//   - address: The address of the block to be read
-//   - size: The size of the block to be read
-//   - data: Pointer to the allocated memory for the heap
-//   - start_address: The starting address of the heap
 void read(ll_list_t *allocated_blocks, size_t address, size_t size, void *data,
 	  size_t start_address)
 {
@@ -408,17 +342,6 @@ void read(ll_list_t *allocated_blocks, size_t address, size_t size, void *data,
 	free(block);
 }
 
-// Function to dump the memory statistics
-//
-// Parameters:
-//   - num_lists: The number of segregated free lists
-//   - malloc_calls: The number of malloc calls
-//   - fragmentations: The number of fragmentations
-//   - free_calls: The number of free calls
-//   - lists: The array of segregated free lists
-//   - allocated_blocks: The linked list of allocated blocks
-//   - start_address: The starting address of the heap
-//   - data: Pointer to the allocated memory for the heap
 void dump_memory(size_t num_lists, size_t malloc_calls, size_t fragmentations,
 		 size_t free_calls, sfl_list_t *lists,
 		 ll_list_t allocated_blocks, size_t start_address, void *data)
@@ -493,13 +416,6 @@ void dump_memory(size_t num_lists, size_t malloc_calls, size_t fragmentations,
 	printf("\n-----DUMP-----\n");
 }
 
-// Function to free the memory of the heap
-//
-// Parameters:
-//   - lists: The array of segregated free lists
-//   - num_lists: The number of segregated free lists
-//   - data: Pointer to the allocated memory for the heap
-//   - allocated_blocks: Linked list of allocated blocks
 void destroy_heap(sfl_list_t *lists, size_t num_lists, void *data,
 		  ll_list_t allocated_blocks)
 {
@@ -526,74 +442,4 @@ void destroy_heap(sfl_list_t *lists, size_t num_lists, void *data,
 
 	// Free the memory of the heap
 	free(data);
-}
-
-int main(void)
-{
-	// Initialize the lists and the data
-	sfl_list_t *list = NULL;
-	void *data = NULL;
-	ll_list_t allocated_blocks = { NULL, 0 };
-
-	// Initialize the memory statistics
-	size_t malloc_calls = 0;
-	size_t free_calls = 0;
-	size_t fragmentations = 0;
-
-	// Initialize the variables for the input
-	size_t start_address, num_lists, bytes_per_list, reconstruct, size,
-		address;
-
-	// Allocate memory for the command
-	char command[COMMAND_SIZE];
-
-	while (1) {
-		// Read the command from the input
-		scanf("%s", command);
-
-		if (!strcmp(command, "INIT_HEAP")) {
-			// Read the parameters for the INIT_HEAP command
-			scanf("%lx %lu %lu %lu", &start_address, &num_lists,
-			      &bytes_per_list, &reconstruct);
-
-			// Initialize the heap
-			list = init_heap(start_address, num_lists,
-					 bytes_per_list, &data);
-		} else if (!strcmp(command, "DUMP_MEMORY")) {
-			// Dump the memory statistics
-			dump_memory(num_lists, malloc_calls, fragmentations,
-				    free_calls, list, allocated_blocks,
-				    start_address, data);
-		} else if (!strcmp(command, "MALLOC")) {
-			// Read the size of the block to be allocated
-			scanf("%lu", &size);
-
-			malloc_f(size, &list, &num_lists, &allocated_blocks,
-				 &fragmentations, &malloc_calls);
-		} else if (!strcmp(command, "FREE")) {
-			// Read the address of the block to be freed
-			scanf("%lx", &address);
-
-			// Free the memory of the block
-			if (reconstruct) {
-			} else {
-				simple_free(address, &allocated_blocks, &list,
-					    &num_lists, data, start_address,
-					    &free_calls);
-			}
-		} else if (!strcmp(command, "READ")) {
-			// Read the address and the size of the block to be read
-			scanf("%lx %lu", &address, &size);
-
-			// Read the block
-			read(&allocated_blocks, address, size, data,
-			     start_address);
-		} else if (!strcmp(command, "DESTROY_HEAP")) {
-			// Destroy the heap
-			destroy_heap(list, num_lists, data, allocated_blocks);
-
-			// Exit the program
-			return 0;
-		}
-	}
 }

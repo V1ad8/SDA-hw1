@@ -1,18 +1,10 @@
-CC=gcc
-CFLAGS=-Wall -Wextra -pedantic
-DEBUG=-g -ggdb -O0 -march=native
-
-ELF=segregated_free_lists
-
 .PHONY: build, clean
 
-build: $(ELF)
+build:
+	gcc -Wall -Wextra -pedantic -g -ggdb -O0 -march=native src/sfl.c src/functions.c -o sfl
 
-$(ELF): $(ELF).c
-	$(CC) $(CFLAGS) $(DEBUG) $^ -o $@
-
-run: $(ELF)
-	./$<
+run:
+	./sfl
 
 clean:
-	rm -f $(ELF)
+	rm -f sfl
