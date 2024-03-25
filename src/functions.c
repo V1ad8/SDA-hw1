@@ -1,17 +1,18 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "header.h"
 #include "utils.h"
 
 sfl_list_t *init_heap(size_t heap_start, size_t num_lists,
-		      size_t bytes_per_list, void **data)
+		      size_t bytes_per_list, void **heap)
 {
 	// Allocate memory for the heap
-	*data = malloc(num_lists * bytes_per_list);
-	DIE(*data == NULL, "Malloc failed while allocating heap");
+	*heap = malloc(num_lists * bytes_per_list);
+	DIE(*heap == NULL, "Malloc failed while allocating heap");
 
 	// Set the starting address of the heap
-	heap_start = (size_t)*data;
+	heap_start = (size_t)*heap;
 
 	// Allocate memory for the segregated free lists
 	sfl_list_t *lists = malloc(sizeof(sfl_list_t) * num_lists);
@@ -188,14 +189,14 @@ void malloc_f(size_t size, sfl_list_t **lists, size_t *num_lists,
 }
 
 void simple_free(size_t address, ll_list_t *allocated_blocks,
-		 sfl_list_t **lists, size_t *num_lists, void *data,
+		 sfl_list_t **lists, size_t *num_lists, void *heap,
 		 size_t start_address, size_t *free_calls)
 {
 	// Find the block with the given address
 	for (ll_node_t *current_ll = allocated_blocks->head; current_ll;
 	     current_ll = current_ll->next) {
 		if (address == (size_t)((char *)current_ll->data -
-					(char *)data + start_address)) {
+					(char *)heap + start_address)) {
 			// Count the number of free calls for valid calls
 			*free_calls += 1;
 
@@ -304,34 +305,48 @@ void simple_free(size_t address, ll_list_t *allocated_blocks,
 	printf("Invalid free\n");
 }
 
-void read(ll_list_t *allocated_blocks, size_t address, size_t size, void *data,
+void read(ll_list_t *allocated_blocks, size_t address, size_t size, void *heap,
 	  size_t start_address)
 {
 	// Allocate memory for the block
-	char *block = malloc(size);
+	char *block = malloc(size + 1);
 	DIE(block == NULL, "Malloc failed while allocating block");
 
 	// Make an index for the block
 	size_t j = 0;
 
+	// Counter for the number of bytes read
+	size_t read = 0;
+
+	// Make an index for the allocated block
+	size_t i = 0;
+
 	// Find the block with the given address
 	for (ll_node_t *current = allocated_blocks->head; current != NULL;
 	     current = current->next) {
 		if (address ==
-		    (size_t)current->data - (size_t)data + start_address) {
+		    (size_t)current->data - (size_t)heap + start_address) {
 			// Copy the data from the block to the allocated memory
-			for (size_t i = 0; i < size && i < current->size; i++) {
+			for (i = 0, read = 0; i < size && i < current->size;
+			     i++, read++) {
 				block[j++] = *((char *)current->data + i);
 			}
 
 			// Update the size and address
-			size -= current->size;
-			address += current->size;
+			size -= read;
+			address += read;
 
 			// Check if the block is read completely
 			if (size == 0) {
+				// Add the null terminator
+				block[j] = '\0';
+
+				// Print the block
 				printf("%s\n", block);
+
+				// Free the memory of the block
 				free(block);
+
 				return;
 			}
 		}
@@ -339,7 +354,49 @@ void read(ll_list_t *allocated_blocks, size_t address, size_t size, void *data,
 
 	// If the address is not found, print an error message
 	printf("Segmentation fault (core dumped)\n");
+
+	// Free the memory of the block
 	free(block);
+}
+
+void write(ll_list_t *allocated_blocks, size_t address, size_t size, void *heap,
+	   size_t start_address, char *block)
+{
+	// Calculate the original block size
+	size_t block_size = strlen(block);
+
+	// Make an index for the allocated block
+	size_t i;
+
+	// Counter for the number of bytes written
+	size_t written;
+
+	// Find the block with the given address
+	for (ll_node_t *current = allocated_blocks->head; current != NULL;
+	     current = current->next) {
+		if (address ==
+		    (size_t)current->data - (size_t)heap + start_address) {
+			// Copy the data from the block to the allocated memory
+			for (i = 0, written = 0;
+			     i < size && i < current->size && i < block_size;
+			     i++, written++) {
+				*((char *)current->data + i) = block[i];
+			}
+
+			// Update the size, address and block size
+			size -= written;
+			block_size -= written;
+			address += written;
+
+			// Check if the block is written completely
+			if (size == 0 || block_size == 0) {
+				return;
+			}
+		}
+	}
+
+	// If the address is not found, print an error message
+	printf("Segmentation fault (core dumped)\n");
 }
 
 void dump_memory(size_t num_lists, size_t malloc_calls, size_t fragmentations,
@@ -374,7 +431,7 @@ void dump_memory(size_t num_lists, size_t malloc_calls, size_t fragmentations,
 	printf("Total memory: %lu bytes\n", free_memory + allocated_memory);
 	printf("Total allocated memory: %lu bytes\n", allocated_memory);
 	printf("Total free memory: %lu bytes\n", free_memory);
-	printf("Number of free blocks: %lu\n", free_blocks);
+	printf("Free blocks: %lu\n", free_blocks);
 
 	// Formula: (bytes_per_list / 8) * ((2^num_lists - 1) / 2^(num_lists - 1))
 	printf("Number of allocated blocks: %lu\n", malloc_calls - free_calls);
@@ -442,4 +499,15 @@ void destroy_heap(sfl_list_t *lists, size_t num_lists, void *data,
 
 	// Free the memory of the heap
 	free(data);
+}
+
+void remove_quotation_marks(char *string)
+{
+	// Remove the first quotation mark
+	for (size_t i = 0; i < strlen(string); i++) {
+		string[i] = string[i + 1];
+	}
+
+	// Remove the last quotation mark
+	string[strlen(string) - 1] = '\0';
 }

@@ -67,6 +67,19 @@ int main(void)
 			// Read the block
 			read(&allocated_blocks, address, size, data,
 			     start_address);
+		} else if (!strcmp(command, "WRITE")) {
+			// Allocate memory for the block
+			char *block = (char *)malloc(size * sizeof(char));
+
+			// Read the address and the size of the block to be written
+			scanf("%lx %s %lu", &address, block, &size);
+
+			// Format the block
+			remove_quotation_marks(block);
+
+			write(&allocated_blocks, address, size, data,
+			      start_address, block);
+			free(block);
 		} else if (!strcmp(command, "DESTROY_HEAP")) {
 			// Destroy the heap
 			destroy_heap(list, num_lists, data, allocated_blocks);
