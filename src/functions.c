@@ -200,7 +200,8 @@ void malloc_f(size_t size, sfl_list_t **lists, size_t *num_lists,
 
 			// Find the index of the new list
 			for (size_t j = 0; j < *num_lists; j++) {
-				if ((*lists)[j].element_size > remaining_size) {
+				if (j == *num_lists - 1 ||
+				    (*lists)[j].element_size > remaining_size) {
 					// Move the lists to the right
 					for (size_t k = *num_lists - 1; k > j;
 					     k--) {
