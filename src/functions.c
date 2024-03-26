@@ -314,11 +314,14 @@ void simple_free(size_t address, ll_list_t *allocated_blocks,
 			// Reallocate memory for the segregated free lists
 			*lists = realloc(*lists,
 					 *num_lists * sizeof(sfl_list_t));
+			DIE(lists == NULL,
+			    "Realloc failed while reallocating lists");
 
 			// Find the index of the new list
 			for (size_t i = 0; i < *num_lists; i++) {
-				if ((*lists)[i].element_size >
-				    current_ll->size) {
+				if (i == *num_lists - 1 ||
+				    (*lists)[i].element_size >
+					    current_ll->size) {
 					// Move the lists to the right
 					for (size_t j = *num_lists - 1; j > i;
 					     j--) {
