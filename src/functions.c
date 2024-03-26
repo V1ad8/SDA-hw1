@@ -428,6 +428,9 @@ bool write(ll_list_t *allocated_blocks, size_t address, size_t size, void *heap,
 	// Make an index for the allocated block
 	size_t i;
 
+	// Make an index for the soon-to-be-written block
+	size_t j = 0;
+
 	// Find the block with the given address
 	for (ll_node_t *current = allocated_blocks->head; current != NULL;
 	     current = current->next) {
@@ -436,8 +439,8 @@ bool write(ll_list_t *allocated_blocks, size_t address, size_t size, void *heap,
 			// Copy the data from the block to the allocated memory
 			for (i = 0;
 			     i < size && i < current->size && i < block_size;
-			     i++) {
-				*((char *)current->data + i) = block[i];
+			     i++, j++) {
+				*((char *)current->data + i) = block[j];
 			}
 
 			// Update the size, address and block size
