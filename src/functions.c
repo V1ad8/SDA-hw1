@@ -66,8 +66,8 @@ void malloc_f(size_t size, sfl_list_t **lists, size_t *num_lists,
 	// Find the list with the smallest element size that can store the
 	// requested size
 	for (size_t i = 0; i < *num_lists; i++) {
-		// If the current list is too small, continue
-		if ((*lists)[i].element_size < size || (*lists)[i].size == 0 ||
+		// If the current list is too small or empty, continue
+		if ((*lists)[i].element_size < size ||
 		    (*lists)[i].head == NULL) {
 			continue;
 		}
@@ -85,27 +85,25 @@ void malloc_f(size_t size, sfl_list_t **lists, size_t *num_lists,
 		new_ll->next = NULL;
 		new_ll->prev = NULL;
 
-		// Move to the end of the list
 		ll_node_t *last_ll = allocated_blocks->head;
 		if (last_ll == NULL) {
 			allocated_blocks->head = new_ll;
-		} else {
-			/*
-			while (last_ll->next != NULL &&
-			       last_ll->data < new_ll->data) {
-				last_ll = last_ll->next;
-			}
-			*/
-
+		} else if (new_ll->data < last_ll->data) {
 			last_ll->prev = new_ll;
 			new_ll->next = last_ll;
 
 			allocated_blocks->head = new_ll;
+		} else {
+			// Move to the appropriate position
+			while (last_ll->next != NULL &&
+			       last_ll->next->data < new_ll->data) {
+				last_ll = last_ll->next;
+			}
 
 			// Add the current node to the allocated blocks list
-			// new_ll->next = last_ll->next;
-			// new_ll->prev = last_ll;
-			// last_ll->next = new_ll;
+			new_ll->next = last_ll->next;
+			new_ll->prev = last_ll;
+			last_ll->next = new_ll;
 		}
 
 		// Update the number of allocated blocks

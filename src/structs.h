@@ -19,7 +19,7 @@ typedef struct sfl_list_t {
 // Structure for a node in the linked list
 typedef struct ll_node_t {
 	void *data;
-	size_t size; // The number of elements stored in the current block
+	size_t size; // The size of the data in the node
 	struct ll_node_t *next, *prev;
 } ll_node_t;
 
