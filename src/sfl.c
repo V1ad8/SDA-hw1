@@ -62,8 +62,14 @@ int main(void)
 			scanf("%lx %lu", &address, &size);
 
 			// Read the block
-			read(&allocated_blocks, address, size, data,
-			     start_address);
+			if (!read(&allocated_blocks, address, size, data,
+				  start_address)) {
+				dump_memory(num_lists, malloc_calls,
+					    fragmentations, free_calls, list,
+					    allocated_blocks, start_address,
+					    data);
+			}
+
 		} else if (!strcmp(command, "WRITE")) {
 			// Read the address and the size of the block to be written
 			scanf("%lx", &address);

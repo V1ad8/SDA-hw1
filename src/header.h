@@ -52,7 +52,10 @@ void simple_free(size_t address, ll_list_t *allocated_blocks,
 //   - size: The size of the block to be read
 //   - heap: Pointer to the allocated memory for the heap
 //   - start_address: The starting address of the heap
-void read(ll_list_t *allocated_blocks, size_t address, size_t size, void *heap,
+//
+// Returns:
+//   - true if the operation was successful, false otherwise
+bool read(ll_list_t *allocated_blocks, size_t address, size_t size, void *heap,
 	  size_t start_address);
 
 // Function to write a block of memory
@@ -66,7 +69,7 @@ void read(ll_list_t *allocated_blocks, size_t address, size_t size, void *heap,
 //   - block: Pointer to the block of memory to be written
 //
 // Returns:
-//   - true if the write was successful, false otherwise
+//   - true if the operation was successful, false otherwise
 bool write(ll_list_t *allocated_blocks, size_t address, size_t size, void *heap,
 	   size_t start_address, char *block);
 

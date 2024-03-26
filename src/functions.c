@@ -365,7 +365,7 @@ void simple_free(size_t address, ll_list_t *allocated_blocks,
 	printf("Invalid free\n");
 }
 
-void read(ll_list_t *allocated_blocks, size_t address, size_t size, void *heap,
+bool read(ll_list_t *allocated_blocks, size_t address, size_t size, void *heap,
 	  size_t start_address)
 {
 	// Allocate memory for the block
@@ -407,7 +407,8 @@ void read(ll_list_t *allocated_blocks, size_t address, size_t size, void *heap,
 				// Free the memory of the block
 				free(block);
 
-				return;
+				// Return true if the block is read completely
+				return true;
 			}
 		}
 	}
@@ -417,6 +418,9 @@ void read(ll_list_t *allocated_blocks, size_t address, size_t size, void *heap,
 
 	// Free the memory of the block
 	free(block);
+
+	// Return false if the block is not read completely
+	return false;
 }
 
 bool write(ll_list_t *allocated_blocks, size_t address, size_t size, void *heap,
