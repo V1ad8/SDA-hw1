@@ -135,7 +135,7 @@ void malloc_f(size_t size, sfl_list_t **lists, size_t *num_lists,
 			// Reallocate memory for the segregated free lists
 			*lists = realloc(*lists,
 					 *num_lists * sizeof(sfl_list_t));
-			DIE(*lists == NULL,
+			DIE(lists == NULL,
 			    "Realloc failed while reallocating lists");
 		}
 
