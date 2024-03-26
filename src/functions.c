@@ -115,14 +115,38 @@ void malloc_f(size_t size, sfl_list_t **lists, size_t *num_lists,
 		if ((*lists)[i].head) {
 			(*lists)[i].head->prev = NULL;
 		}
-		// (*lists)[i].head->prev = NULL;
+
+		// Update the number of free blocks in the list
 		(*lists)[i].size -= 1;
+
+		// Calculate the remaining size
+		size_t remaining_size = (*lists)[i].element_size - size;
+
+		// Check if the list is empty
+		if ((*lists)[i].size == 0) {
+			// Move the lists to the left
+			for (size_t j = i; j < *num_lists - 1; j++) {
+				(*lists)[j] = (*lists)[j + 1];
+			}
+
+			// Free the memory of the last list
+			free(lists[*num_lists - 1]);
+
+			// Update the number of lists
+			*num_lists -= 1;
+
+			// Reallocate memory for the segregated free lists
+			*lists = realloc(*lists,
+					 *num_lists * sizeof(sfl_list_t));
+			DIE(*lists == NULL,
+			    "Realloc failed while reallocating lists");
+		}
 
 		// Free the memory of the removed node
 		free(first_sfl);
 
 		// Add the remaining memory to the next list
-		if ((*lists)[i].element_size == size) {
+		if (!remaining_size) {
 			return;
 		} else {
 			// Count fragmentations
@@ -136,23 +160,29 @@ void malloc_f(size_t size, sfl_list_t **lists, size_t *num_lists,
 			// Set the data of the current node
 			new_sfl->data = (void *)((size_t)new_ll->data + size);
 
-			// Calculate the remaining memory
-			size_t remaining_size = (*lists)[i].element_size - size;
-
 			// Find the list which mathces the remaining size
 			for (size_t j = 0; j < *num_lists; j++) {
 				if ((*lists)[j].element_size ==
 				    remaining_size) {
-					// Move to the end of the list
 					sfl_node_t *last_sfl = (*lists)[j].head;
-					while (last_sfl->next != NULL) {
-						last_sfl = last_sfl->next;
-					}
+					if (new_sfl->data < last_sfl->data) {
+						last_sfl->prev = new_sfl;
+						new_sfl->next = last_sfl;
 
-					// Connect the new node to the last one
-					last_sfl->next = new_sfl;
-					new_sfl->prev = last_sfl;
-					new_sfl->next = NULL;
+						(*lists)[j].head = new_sfl;
+					} else {
+						// Move to the appropriate position
+						while (last_sfl->next != NULL &&
+						       last_sfl->next->data <
+							       new_sfl->data) {
+							last_sfl = last_sfl->next;
+						}
+
+						// Add the current node to the segregated free list
+						new_sfl->next = last_sfl->next;
+						new_sfl->prev = last_sfl;
+						last_sfl->next = new_sfl;
+					}
 
 					// Update the number of free blocks in the list
 					(*lists)[j].size += 1;
