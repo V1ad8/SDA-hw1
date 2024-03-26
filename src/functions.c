@@ -124,16 +124,13 @@ void malloc_f(size_t size, sfl_list_t **lists, size_t *num_lists,
 
 		// Check if the list is empty
 		if ((*lists)[i].size == 0) {
-			// Move the lists to the left
-			for (size_t j = i; j < *num_lists - 1; j++) {
-				(*lists)[j] = (*lists)[j + 1];
-			}
-
-			// Free the memory of the last list
-			free(lists[*num_lists - 1]);
-
 			// Update the number of lists
 			*num_lists -= 1;
+
+			// Move the lists to the left
+			for (size_t j = i; j < *num_lists; j++) {
+				(*lists)[j] = (*lists)[j + 1];
+			}
 
 			// Reallocate memory for the segregated free lists
 			*lists = realloc(*lists,
@@ -175,7 +172,8 @@ void malloc_f(size_t size, sfl_list_t **lists, size_t *num_lists,
 						while (last_sfl->next != NULL &&
 						       last_sfl->next->data <
 							       new_sfl->data) {
-							last_sfl = last_sfl->next;
+							last_sfl =
+								last_sfl->next;
 						}
 
 						// Add the current node to the segregated free list
