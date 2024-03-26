@@ -3,6 +3,12 @@
 
 #include <stddef.h>
 
+// The size of the command from the input
+#define COMMAND_SIZE 100
+
+// Boolean type for the C language
+typedef enum { false, true } bool;
+
 // Structure for a node in the segregated free list
 typedef struct sfl_node_t {
 	void *data;

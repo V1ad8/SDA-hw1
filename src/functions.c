@@ -4,6 +4,9 @@
 #include "header.h"
 #include "utils.h"
 
+// The size of the text from the input
+#define TEXT_SIZE 600
+
 sfl_list_t *init_heap(size_t heap_start, size_t num_lists,
 		      size_t bytes_per_list, void **heap)
 {
@@ -416,7 +419,7 @@ void read(ll_list_t *allocated_blocks, size_t address, size_t size, void *heap,
 	free(block);
 }
 
-void write(ll_list_t *allocated_blocks, size_t address, size_t size, void *heap,
+bool write(ll_list_t *allocated_blocks, size_t address, size_t size, void *heap,
 	   size_t start_address, char *block)
 {
 	// Calculate the original block size
@@ -425,35 +428,35 @@ void write(ll_list_t *allocated_blocks, size_t address, size_t size, void *heap,
 	// Make an index for the allocated block
 	size_t i;
 
-	// Counter for the number of bytes written
-	size_t written;
-
 	// Find the block with the given address
 	for (ll_node_t *current = allocated_blocks->head; current != NULL;
 	     current = current->next) {
 		if (address ==
 		    (size_t)current->data - (size_t)heap + start_address) {
 			// Copy the data from the block to the allocated memory
-			for (i = 0, written = 0;
+			for (i = 0;
 			     i < size && i < current->size && i < block_size;
-			     i++, written++) {
+			     i++) {
 				*((char *)current->data + i) = block[i];
 			}
 
 			// Update the size, address and block size
-			size -= written;
-			block_size -= written;
-			address += written;
+			size -= i;
+			block_size -= i;
+			address += i;
 
-			// Check if the block is written completely
+			// Check if the block is written completely and return true
 			if (size == 0 || block_size == 0) {
-				return;
+				return true;
 			}
 		}
 	}
 
 	// If the address is not found, print an error message
 	printf("Segmentation fault (core dumped)\n");
+
+	// Return false if the block is not written completely
+	return false;
 }
 
 void dump_memory(size_t num_lists, size_t malloc_calls, size_t fragmentations,
@@ -570,13 +573,30 @@ void destroy_heap(sfl_list_t *lists, size_t num_lists, void *data,
 	free(data);
 }
 
-void remove_quotation_marks(char *string)
+char *read_block(void)
 {
-	// Remove the first quotation mark
-	for (size_t i = 0; i < strlen(string); i++) {
-		string[i] = string[i + 1];
-	}
+	// Allocate memory for the block
+	char *block = malloc(TEXT_SIZE * sizeof(char));
+	DIE(block == NULL, "Malloc failed while allocating block");
 
-	// Remove the last quotation mark
-	string[strlen(string) - 1] = '\0';
+	// Initialize an index for the block
+	size_t j = 0;
+
+	char c = fgetc(stdin);
+
+	// Skip characters until the opening quotation mark is found
+	do {
+		c = fgetc(stdin);
+	} while (c != '"');
+
+	// Read characters until the closing quotation mark is found
+	do {
+		c = fgetc(stdin);
+		block[j++] = c;
+	} while (c != '"');
+
+	// Add the null terminator
+	block[j - 1] = '\0';
+
+	return block;
 }

@@ -64,7 +64,10 @@ void read(ll_list_t *allocated_blocks, size_t address, size_t size, void *heap,
 //   - heap: Pointer to the allocated memory for the heap
 //   - start_address: The starting address of the heap
 //   - block: Pointer to the block of memory to be written
-void write(ll_list_t *allocated_blocks, size_t address, size_t size, void *heap,
+//
+// Returns:
+//   - true if the write was successful, false otherwise
+bool write(ll_list_t *allocated_blocks, size_t address, size_t size, void *heap,
 	   size_t start_address, char *block);
 
 // Function to dump the memory statistics
@@ -97,5 +100,11 @@ void destroy_heap(sfl_list_t *lists, size_t num_lists, void *heap,
 // Parameters:
 //   - string: The string to remove the quotation marks from
 void remove_quotation_marks(char *string);
+
+// Function to read a block of memory placed in between quotation marks
+//
+// Returns:
+//   - The block of memory read
+char *read_block(void);
 
 #endif /* HEADER_H_ */

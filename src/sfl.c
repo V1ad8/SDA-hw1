@@ -4,9 +4,6 @@
 #include "utils.h"
 #include "header.h"
 
-// The size of the command from the input
-#define COMMAND_SIZE 100
-
 int main(void)
 {
 	// Initialize the lists and the data
@@ -68,17 +65,23 @@ int main(void)
 			read(&allocated_blocks, address, size, data,
 			     start_address);
 		} else if (!strcmp(command, "WRITE")) {
-			// Allocate memory for the block
-			char *block = (char *)malloc(size * sizeof(char));
-
 			// Read the address and the size of the block to be written
-			scanf("%lx %s %lu", &address, block, &size);
+			scanf("%lx", &address);
 
-			// Format the block
-			remove_quotation_marks(block);
+			// Read the block
+			char *block = read_block();
 
-			write(&allocated_blocks, address, size, data,
-			      start_address, block);
+			// Read the size of the block to be written
+			scanf("%lu", &size);
+
+			// Write the block
+			if (!write(&allocated_blocks, address, size, data,
+				   start_address, block)) {
+				dump_memory(num_lists, malloc_calls,
+					    fragmentations, free_calls, list,
+					    allocated_blocks, start_address,
+					    data);
+			}
 			free(block);
 		} else if (!strcmp(command, "DESTROY_HEAP")) {
 			// Destroy the heap
