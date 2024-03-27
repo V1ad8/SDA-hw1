@@ -14,7 +14,7 @@
 // Returns:
 //   - The array of segregated free lists
 sfl_list_t *init_heap(size_t heap_start, size_t number_of_sfl_lists,
-					  size_t bytes_per_list, void **heap_data);
+		      size_t bytes_per_list, void **heap_data);
 
 // Function to allocate memory using segregated free lists
 //
@@ -26,8 +26,8 @@ sfl_list_t *init_heap(size_t heap_start, size_t number_of_sfl_lists,
 //   - fragmentations: Pointer to the count of fragmentations
 //   - malloc_calls: Pointer to the count of malloc calls
 void malloc_f(size_t block_size, sfl_list_t **sfl_lists,
-			  size_t *number_of_sfl_lists, ll_list_t *allocated_blocks,
-			  size_t *fragmentations, size_t *malloc_calls);
+	      size_t *number_of_sfl_lists, ll_list_t *allocated_blocks,
+	      size_t *fragmentations, size_t *malloc_calls);
 
 // Function to free memory using segregated free lists
 //
@@ -40,8 +40,8 @@ void malloc_f(size_t block_size, sfl_list_t **sfl_lists,
 //   - start_address: The starting address of the heap
 //   - free_calls: Pointer to the counter for the number of free calls
 void simple_free(size_t block_address, ll_list_t *allocated_blocks,
-				 sfl_list_t **sfl_lists, size_t *number_of_sfl_lists,
-				 void *heap_data, size_t start_address, size_t *free_calls);
+		 sfl_list_t **sfl_lists, size_t *number_of_sfl_lists,
+		 void *heap_data, size_t start_address, size_t *free_calls);
 
 // Function to read a block of memory
 //
@@ -55,7 +55,7 @@ void simple_free(size_t block_address, ll_list_t *allocated_blocks,
 // Returns:
 //   - true if the operation was successful, false otherwise
 bool read(ll_list_t *allocated_blocks, size_t block_address, size_t read_size,
-		  void *heap_data, size_t start_address);
+	  void *heap_data, size_t start_address);
 
 // Function to write a block of memory
 //
@@ -70,7 +70,7 @@ bool read(ll_list_t *allocated_blocks, size_t block_address, size_t read_size,
 // Returns:
 //   - true if the operation was successful, false otherwise
 bool write(ll_list_t *allocated_blocks, size_t block_address, size_t write_size,
-		   void *heap_data, size_t start_address, char *text);
+	   void *heap_data, size_t start_address, char *text);
 
 // Function to dump the memory statistics
 //
@@ -84,9 +84,9 @@ bool write(ll_list_t *allocated_blocks, size_t block_address, size_t write_size,
 //   - start_address: The starting address of the heap
 //   - heap_data: Pointer to the allocated memory for the heap
 void dump_memory(size_t number_of_sfl_lists, size_t malloc_calls,
-				 size_t fragmentations, size_t free_calls,
-				 sfl_list_t *sfl_lists, ll_list_t allocated_blocks,
-				 size_t start_address, void *heap_data);
+		 size_t fragmentations, size_t free_calls,
+		 sfl_list_t *sfl_lists, ll_list_t allocated_blocks,
+		 size_t start_address, void *heap_data);
 
 // Function to free the memory of the heap
 //
@@ -96,7 +96,7 @@ void dump_memory(size_t number_of_sfl_lists, size_t malloc_calls,
 //   - heap_data: Pointer to the allocated memory for the heap
 //   - allocated_blocks: Linked list of allocated blocks
 void destroy_heap(sfl_list_t *sfl_lists, size_t number_of_sfl_lists,
-				  void *heap_data, ll_list_t allocated_blocks);
+		  void *heap_data, ll_list_t allocated_blocks);
 
 // Function to read a block of memory placed in between quotation marks
 //
@@ -105,6 +105,6 @@ void destroy_heap(sfl_list_t *sfl_lists, size_t number_of_sfl_lists,
 char *read_text(void);
 
 // Function to run the program
-void run();
+void run(void);
 
 #endif /* HEADER_H_ */
