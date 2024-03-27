@@ -32,6 +32,11 @@ int main(void)
 			scanf("%lx %lu %lu %lu", &start_address, &num_lists,
 			      &bytes_per_list, &reconstruct);
 
+			// Temporary fix for the reconstruct parameter
+			if (reconstruct) {
+				return 0;
+			}
+
 			// Initialize the heap
 			list = init_heap(start_address, num_lists,
 					 bytes_per_list, &data);
@@ -64,10 +69,21 @@ int main(void)
 			// Read the block
 			if (!read(&allocated_blocks, address, size, data,
 				  start_address)) {
+				// Dump the memory statistics
 				dump_memory(num_lists, malloc_calls,
 					    fragmentations, free_calls, list,
 					    allocated_blocks, start_address,
 					    data);
+
+				// Destroy the heap
+				destroy_heap(list, num_lists, data,
+					     allocated_blocks);
+
+				// Free the command
+				free(command);
+
+				// Exit the program
+				return 0;
 			}
 
 		} else if (!strcmp(command, "WRITE")) {
@@ -83,11 +99,25 @@ int main(void)
 			// Write the block
 			if (!write(&allocated_blocks, address, size, data,
 				   start_address, block)) {
+				// Dump the memory statistics
 				dump_memory(num_lists, malloc_calls,
 					    fragmentations, free_calls, list,
 					    allocated_blocks, start_address,
 					    data);
+
+				// Destroy the heap
+				destroy_heap(list, num_lists, data,
+					     allocated_blocks);
+
+				// Free the command and the block
+				free(command);
+				free(block);
+
+				// Exit the program
+				return 0;
 			}
+
+			// Free the block
 			free(block);
 		} else if (!strcmp(command, "DESTROY_HEAP")) {
 			// Destroy the heap
