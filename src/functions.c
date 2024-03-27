@@ -106,6 +106,10 @@ void malloc_f(size_t size, sfl_list_t **lists, size_t *num_lists,
 			// Add the current node to the allocated blocks list
 			new_ll->next = last_ll->next;
 			new_ll->prev = last_ll;
+
+			if (last_ll->next) {
+				last_ll->next->prev = new_ll;
+			}
 			last_ll->next = new_ll;
 		}
 
@@ -234,6 +238,15 @@ void simple_free(size_t address, ll_list_t *allocated_blocks,
 		 sfl_list_t **lists, size_t *num_lists, void *heap,
 		 size_t start_address, size_t *free_calls)
 {
+	// Check if the address is NULL
+	if (address == 0) {
+		// Count free calls
+		*free_calls += 1;
+
+		// Do nothing for free(NULL)
+		return;
+	}
+
 	// Find the block with the given address
 	for (ll_node_t *current_ll = allocated_blocks->head; current_ll;
 	     current_ll = current_ll->next) {
@@ -256,6 +269,10 @@ void simple_free(size_t address, ll_list_t *allocated_blocks,
 
 			// Update the number of allocated blocks
 			allocated_blocks->size -= 1;
+
+			if (current_ll->size == 0) {
+				allocated_blocks->head = NULL;
+			}
 
 			// Add the current node to the segregated free list
 			for (size_t i = 0; i < *num_lists; i++) {
@@ -350,15 +367,6 @@ void simple_free(size_t address, ll_list_t *allocated_blocks,
 				}
 			}
 		}
-	}
-
-	// Check if the address is NULL
-	if (address == 0) {
-		// Count free calls
-		*free_calls += 1;
-
-		// Do nothing for free(NULL)
-		return;
 	}
 
 	// If the address is not found, print an error message
