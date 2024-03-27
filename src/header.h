@@ -1,7 +1,6 @@
 #ifndef HEADER_H_
 #define HEADER_H_
 
-#include <stddef.h>
 #include "structs.h"
 
 // Function to initialize the heap
@@ -109,5 +108,8 @@ void remove_quotation_marks(char *string);
 // Returns:
 //   - The block of memory read
 char *read_block(void);
+
+// Function to run the program
+void run();
 
 #endif /* HEADER_H_ */

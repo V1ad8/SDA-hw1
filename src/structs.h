@@ -6,6 +6,9 @@
 // The size of the command from the input
 #define COMMAND_SIZE 100
 
+// The size of the text from the input
+#define TEXT_SIZE 600
+
 // Boolean type for the C language
 typedef enum { false, true } bool;
 
