@@ -16,16 +16,16 @@ make build > /dev/null
 # Loop over all of the test cases (00 - test_number)
 for i in $(seq -w 00 $test_number); do
     # Run Valgrind on the "task" program with input from test cases
-    valgrind --log-file="valgrind_out/$i" --leak-check=full --show-leak-kinds=all --track-origins=yes -s ./$task <./tasks/$task/tests/$i-$task/$i-$task.in >valgrind-out
+    valgrind --log-file="valgrind_out/test-$i" --leak-check=full --show-leak-kinds=all --track-origins=yes -s ./$task <./tasks/$task/tests/$i-$task/$i-$task.in >valgrind-out
     echo -n Test $i done:
 
     # Check for memory leaks
-    correct=$(cat valgrind_out/$i | grep 'All heap blocks were freed -- no leaks are possible' | wc -l)
-    lines=$(cat valgrind_out/$i | wc -l)
+    correct=$(cat valgrind_out/test-$i | grep 'All heap blocks were freed -- no leaks are possible' | wc -l)
+    lines=$(cat valgrind_out/test-$i | wc -l)
 
     # If there are exactly 15 lines in the Valgrind output and no leaks, remove the log file
     if [ "$lines" -eq "$line_number" ] && [ "$correct" -eq 1 ]; then
-        rm valgrind_out/$i
+        rm valgrind_out/test-$i
         echo " no leaks"
     else
         errors=$((errors + 1))
@@ -52,6 +52,8 @@ echo -n Done testing:
 # Print the number of errors
 if [ "$errors" -eq 0 ]; then
     echo " all tests passed"
+
+    rm -r valgrind_out
 else
     echo " $errors/$test_number tests failed"
 fi
