@@ -9,7 +9,7 @@ sfl_list_t *init_heap(size_t heap_start, size_t number_of_sfl_lists,
 {
 	// Allocate memory for the heap
 	*heap_data = malloc(number_of_sfl_lists * bytes_per_list);
-	DIE(!heap_data, "Malloc failed while allocating heap_data");
+	DIE(!*heap_data, "Malloc failed while allocating heap_data");
 
 	// Set the starting address of the heap
 	heap_start = (size_t)*heap_data;
@@ -151,7 +151,7 @@ void malloc_f(size_t block_size, sfl_list_t **sfl_lists,
 		if (!remaining_size)
 			return;
 
-		// Count the number of fragmentations done by the malloc function
+		// Count fragmentations of the memory
 		*fragmentations += 1;
 
 		// Allocate memory for a new node in the segregated free list
@@ -161,7 +161,7 @@ void malloc_f(size_t block_size, sfl_list_t **sfl_lists,
 		// Set the data of the current node
 		new_sfl->data = (void *)((size_t)new_ll->data + block_size);
 
-		// Find the list which mathces the remaining size
+		// Find the list which matches the remaining size
 		for (size_t j = 0; j < *number_of_sfl_lists; j++) {
 			if ((*sfl_lists)[j].element_size == remaining_size) {
 				sfl_node_t *last_sfl = (*sfl_lists)[j].head;
@@ -197,7 +197,7 @@ void malloc_f(size_t block_size, sfl_list_t **sfl_lists,
 		*number_of_sfl_lists += 1;
 		*sfl_lists = realloc(*sfl_lists,
 				     *number_of_sfl_lists * sizeof(sfl_list_t));
-		DIE(!sfl_lists, "Realloc failed while reallocating sfl_lists");
+		DIE(!*sfl_lists, "Realloc failed while reallocating sfl_lists");
 
 		// Find the index of the new list
 		for (size_t j = 0; j < *number_of_sfl_lists; j++) {
@@ -242,33 +242,34 @@ void simple_free(size_t block_address, ll_list_t *allocated_blocks,
 	// Find the block with the given address
 	for (ll_node_t *current_ll = allocated_blocks->head; current_ll;
 	     current_ll = current_ll->next) {
-		if (block_address !=
+		if (block_address ==
 		    (size_t)((char *)current_ll->data - (char *)heap_data +
-			     start_address))
-			continue;
+			     start_address)) {
+			// Count the number of free calls for valid calls
+			*free_calls += 1;
 
-		// Count the number of free calls for valid calls
-		*free_calls += 1;
+			// Remove the current node from the allocated blocks list
+			if (current_ll->prev)
+				current_ll->prev->next = current_ll->next;
+			else
+				allocated_blocks->head = current_ll->next;
 
-		// Remove the current node from the allocated blocks list
-		if (current_ll->prev)
-			current_ll->prev->next = current_ll->next;
-		else
-			allocated_blocks->head = current_ll->next;
+			// Reconnect the allocated blocks list
+			if (current_ll->next)
+				current_ll->next->prev = current_ll->prev;
 
-		// Reconnect the allocated blocks list
-		if (current_ll->next)
-			current_ll->next->prev = current_ll->prev;
+			// Update the number of allocated blocks
+			allocated_blocks->size -= 1;
 
-		// Update the number of allocated blocks
-		allocated_blocks->size -= 1;
+			if (current_ll->size == 0)
+				allocated_blocks->head = NULL;
 
-		if (current_ll->size == 0)
-			allocated_blocks->head = NULL;
+			// Add the current node to the segregated free list
+			for (size_t i = 0; i < *number_of_sfl_lists; i++) {
+				if (current_ll->size !=
+				    (*sfl_lists)[i].element_size)
+					continue;
 
-		// Add the current node to the segregated free list
-		for (size_t i = 0; i < *number_of_sfl_lists; i++) {
-			if (current_ll->size == (*sfl_lists)[i].element_size) {
 				// Allocate memory for a new node in the segregated free list
 				sfl_node_t *new_sfl =
 					malloc(sizeof(sfl_node_t));
