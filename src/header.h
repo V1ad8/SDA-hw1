@@ -52,9 +52,6 @@ void malloc_f(sfl_list_t **sfl_lists, size_t *lists_num,
 //   - heap_data: Pointer to the allocated memory for the heap
 //   - start_address: The starting address of the heap
 //   - free_calls: Pointer to the counter for the number of free calls
-void simple_free(ll_list_t *allocated_blocks, sfl_list_t **sfl_lists,
-		 size_t block_address, size_t *lists_num, void *heap_data,
-		 size_t start_address, size_t *free_calls);
 
 // Function to free memory using segregated free lists and reconstruct the heap
 //

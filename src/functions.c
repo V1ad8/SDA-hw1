@@ -243,8 +243,7 @@ void malloc_f(sfl_list_t **sfl_lists, size_t *lists_num,
 }
 
 ll_node_t *remove_ll_node(ll_list_t *allocated_blocks, size_t block_address,
-			  size_t *free_calls, void *heap_data,
-			  size_t start_address)
+			  void *heap_data, size_t start_address)
 {
 	// Find the block with the given address
 	for (ll_node_t *current_ll = allocated_blocks->head; current_ll;
@@ -253,9 +252,6 @@ ll_node_t *remove_ll_node(ll_list_t *allocated_blocks, size_t block_address,
 		    (size_t)((char *)current_ll->data - (char *)heap_data +
 			     start_address))
 			continue;
-
-		// Count the number of free calls for valid calls
-		*free_calls += 1;
 
 		// Remove the current node from the allocated blocks list
 		if (current_ll->prev)
@@ -283,32 +279,40 @@ ll_node_t *remove_ll_node(ll_list_t *allocated_blocks, size_t block_address,
 
 void simple_free(ll_list_t *allocated_blocks, sfl_list_t **sfl_lists,
 		 size_t block_address, size_t *lists_num, void *heap_data,
-		 size_t start_address, size_t *free_calls)
+		 size_t start_address, size_t block_size)
 {
-	// Check if the address is NULL
-	if (block_address == 0) {
-		// Count free calls
-		free_calls += 1;
-
-		// Do nothing for free(NULL)
-		return;
-	}
-
 	// Find the block with the given address
 	ll_node_t *current_ll = remove_ll_node(allocated_blocks, block_address,
-					       free_calls, heap_data,
-					       start_address);
+					       heap_data, start_address);
 
 	// Add the current node to the segregated free list
-	if (current_ll) {
-		add_sfl_node((size_t)current_ll->data, current_ll->size,
-			     sfl_lists, lists_num);
-	} else { // If the address is not found, print an error message
-		printf("Invalid free\n");
-	}
+	add_sfl_node((size_t)current_ll->data, block_size, sfl_lists,
+		     lists_num);
 
 	// Free the memory of the current node
 	free(current_ll);
+}
+
+ll_node_t *get_ll_node(ll_list_t allocated_blocks, size_t block_address,
+		       size_t start_address, void *heap_data)
+{
+	// Find the block with the given address
+	for (ll_node_t *current_ll = allocated_blocks.head; current_ll;
+	     current_ll = current_ll->next) {
+		if (block_address == (size_t)current_ll->data -
+					     (size_t)heap_data + start_address)
+			return current_ll;
+	}
+
+	// If the address is not found, return an empty node
+	return NULL;
+}
+
+bool defragment()
+{
+	bool loop = false;
+
+	return loop;
 }
 
 void free_f(sfl_list_t **sfl_lists, size_t *lists_num,
@@ -321,12 +325,34 @@ void free_f(sfl_list_t **sfl_lists, size_t *lists_num,
 	// Read the address of the block to be freed
 	scanf("%lx", &block_address);
 
-	if (reconstruct_type)
+	if (block_address == 0) {
+		// Count free calls
+		*free_calls += 1;
+
+		// Do nothing for free(NULL)
 		return;
+	}
+
+	ll_node_t *current_ll = get_ll_node(*allocated_blocks, block_address,
+					    start_address, heap_data);
+	if (!current_ll) {
+		printf("Invalid free\n");
+		return;
+	}
+
+	// Count free calls
+	*free_calls += 1;
+
+	size_t block_size = current_ll->size;
+
+	bool loop = true;
+	if (reconstruct_type)
+		while (loop)
+			loop = defragment();
 
 	// Free the block
 	simple_free(allocated_blocks, sfl_lists, block_address, lists_num,
-		    heap_data, start_address, free_calls);
+		    heap_data, start_address, block_size);
 }
 
 bool read(ll_list_t allocated_blocks, void *heap_data, size_t start_address,
@@ -636,10 +662,6 @@ void run(void)
 			// Read the parameters for the INIT_HEAP command
 			scanf("%lx %lu %lu %lu", &start_address, &lists_num,
 			      &bytes_per_list, &reconstruct_type);
-
-			// Temporary fix for the reconstruct_type parameter
-			if (reconstruct_type)
-				return;
 
 			// Initialize the heap
 			sfl_lists = init_heap(start_address, lists_num,
