@@ -242,19 +242,10 @@ void malloc_f(sfl_list_t **sfl_lists, size_t *lists_num,
 	printf("Out of memory\n");
 }
 
-void simple_free(ll_list_t *allocated_blocks, sfl_list_t **sfl_lists,
-		 size_t block_address, size_t *lists_num, void *heap_data,
-		 size_t start_address, size_t *free_calls)
+ll_node_t *remove_ll_node(ll_list_t *allocated_blocks, size_t block_address,
+			  size_t *free_calls, void *heap_data,
+			  size_t start_address)
 {
-	// Check if the address is NULL
-	if (block_address == 0) {
-		// Count free calls
-		free_calls += 1;
-
-		// Do nothing for free(NULL)
-		return;
-	}
-
 	// Find the block with the given address
 	for (ll_node_t *current_ll = allocated_blocks->head; current_ll;
 	     current_ll = current_ll->next) {
@@ -279,21 +270,45 @@ void simple_free(ll_list_t *allocated_blocks, sfl_list_t **sfl_lists,
 		// Update the number of allocated blocks
 		allocated_blocks->size -= 1;
 
+		// Check if the list is empty
 		if (current_ll->size == 0)
 			allocated_blocks->head = NULL;
 
-		// Add the current node to the segregated free list
-		add_sfl_node((size_t)current_ll->data, current_ll->size,
-			     sfl_lists, lists_num);
+		// Return the current node
+		return current_ll;
+	}
 
-		// Free the memory of the current node
-		free(current_ll);
+	return NULL;
+}
 
+void simple_free(ll_list_t *allocated_blocks, sfl_list_t **sfl_lists,
+		 size_t block_address, size_t *lists_num, void *heap_data,
+		 size_t start_address, size_t *free_calls)
+{
+	// Check if the address is NULL
+	if (block_address == 0) {
+		// Count free calls
+		free_calls += 1;
+
+		// Do nothing for free(NULL)
 		return;
 	}
 
-	// If the address is not found, print an error message
-	printf("Invalid free\n");
+	// Find the block with the given address
+	ll_node_t *current_ll = remove_ll_node(allocated_blocks, block_address,
+					       free_calls, heap_data,
+					       start_address);
+
+	// Add the current node to the segregated free list
+	if (current_ll) {
+		add_sfl_node((size_t)current_ll->data, current_ll->size,
+			     sfl_lists, lists_num);
+	} else { // If the address is not found, print an error message
+		printf("Invalid free\n");
+	}
+
+	// Free the memory of the current node
+	free(current_ll);
 }
 
 void free_f(sfl_list_t **sfl_lists, size_t *lists_num,

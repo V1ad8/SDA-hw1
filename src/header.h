@@ -16,20 +16,6 @@
 sfl_list_t *init_heap(size_t heap_start, size_t lists_num,
 		      size_t bytes_per_list, void **heap_data);
 
-// Function to move a block from the free list to the allocated list
-//
-// Parameters:
-//   - sfl_lists: The array of segregated free lists
-//   - index: The index of the segregated free list
-//   - block_size: The size of the block to move
-//   - allocated_blocks: Pointer to the linked list of allocated blocks
-//   - lists_num: Pointer to the number of segregated free lists
-//
-// Returns:
-//   - The data of the block moved
-size_t move_sfl_to_ll(sfl_list_t **sfl_lists, size_t index, size_t block_size,
-		      ll_list_t *allocated_blocks, size_t *lists_num);
-
 // Function to move part of a block from the allocated list to the free list
 //
 // Parameters:
