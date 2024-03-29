@@ -1,0 +1,101 @@
+==6687== Memcheck, a memory error detector
+==6687== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==6687== Using Valgrind-3.18.1 and LibVEX; rerun with -h for copyright info
+==6687== Command: ./sfl
+==6687== Parent PID: 6164
+==6687== 
+==6687== 
+==6687== Process terminating with default action of signal 2 (SIGINT)
+==6687==    at 0x497B885: write (write.c:26)
+==6687==    by 0x48F1EEC: _IO_file_write@@GLIBC_2.2.5 (fileops.c:1180)
+==6687==    by 0x48F39E0: new_do_write (fileops.c:448)
+==6687==    by 0x48F39E0: _IO_new_do_write (fileops.c:425)
+==6687==    by 0x48F39E0: _IO_do_write@@GLIBC_2.2.5 (fileops.c:422)
+==6687==    by 0x48F26D4: _IO_new_file_xsputn (fileops.c:1243)
+==6687==    by 0x48F26D4: _IO_file_xsputn@@GLIBC_2.2.5 (fileops.c:1196)
+==6687==    by 0x48DCCA8: outstring_func (vfprintf-internal.c:239)
+==6687==    by 0x48DCCA8: __vfprintf_internal (vfprintf-internal.c:1516)
+==6687==    by 0x48C779E: printf (printf.c:33)
+==6687==    by 0x10A8DF: dump_memory (functions.c:507)
+==6687==    by 0x10ACA7: run (functions.c:634)
+==6687==    by 0x10AE80: main (sfl.c:6)
+==6687== 
+==6687== HEAP SUMMARY:
+==6687==     in use at exit: 2,635,964 bytes in 32,923 blocks
+==6687==   total heap usage: 33,300 allocs, 377 frees, 2,789,996 bytes allocated
+==6687== 
+==6687== 24 bytes in 1 blocks are still reachable in loss record 1 of 9
+==6687==    at 0x4848899: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==6687==    by 0x109494: init_heap (functions.c:29)
+==6687==    by 0x10AC55: run (functions.c:630)
+==6687==    by 0x10AE80: main (sfl.c:6)
+==6687== 
+==6687== 100 bytes in 1 blocks are still reachable in loss record 2 of 9
+==6687==    at 0x4848899: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==6687==    by 0x10ABCD: run (functions.c:614)
+==6687==    by 0x10AE80: main (sfl.c:6)
+==6687== 
+==6687== 1,032 bytes in 1 blocks are still reachable in loss record 3 of 9
+==6687==    at 0x484DCD3: realloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==6687==    by 0x1099AB: add_ll_node (functions.c:121)
+==6687==    by 0x109F39: malloc_f (functions.c:226)
+==6687==    by 0x10ACE9: run (functions.c:638)
+==6687==    by 0x10AE80: main (sfl.c:6)
+==6687== 
+==6687== 1,416 bytes in 59 blocks are still reachable in loss record 4 of 9
+==6687==    at 0x4848899: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==6687==    by 0x109A38: add_sfl_node (functions.c:135)
+==6687==    by 0x109F75: malloc_f (functions.c:234)
+==6687==    by 0x10ACE9: run (functions.c:638)
+==6687==    by 0x10AE80: main (sfl.c:6)
+==6687== 
+==6687== 4,096 bytes in 1 blocks are still reachable in loss record 5 of 9
+==6687==    at 0x4848899: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==6687==    by 0x48E5BA3: _IO_file_doallocate (filedoalloc.c:101)
+==6687==    by 0x48F4CDF: _IO_doallocbuf (genops.c:347)
+==6687==    by 0x48F3CDB: _IO_file_underflow@@GLIBC_2.2.5 (fileops.c:485)
+==6687==    by 0x48F4D95: _IO_default_uflow (genops.c:362)
+==6687==    by 0x48CA0CF: __vfscanf_internal (vfscanf-internal.c:628)
+==6687==    by 0x48C9141: __isoc99_scanf (isoc99_scanf.c:30)
+==6687==    by 0x10ABEC: run (functions.c:618)
+==6687==    by 0x10AE80: main (sfl.c:6)
+==6687== 
+==6687== 4,096 bytes in 1 blocks are still reachable in loss record 6 of 9
+==6687==    at 0x4848899: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==6687==    by 0x48E5BA3: _IO_file_doallocate (filedoalloc.c:101)
+==6687==    by 0x48F4CDF: _IO_doallocbuf (genops.c:347)
+==6687==    by 0x48F3F5F: _IO_file_overflow@@GLIBC_2.2.5 (fileops.c:744)
+==6687==    by 0x48F26D4: _IO_new_file_xsputn (fileops.c:1243)
+==6687==    by 0x48F26D4: _IO_file_xsputn@@GLIBC_2.2.5 (fileops.c:1196)
+==6687==    by 0x48E7F1B: puts (ioputs.c:40)
+==6687==    by 0x10A662: dump_memory (functions.c:468)
+==6687==    by 0x10ACA7: run (functions.c:634)
+==6687==    by 0x10AE80: main (sfl.c:6)
+==6687== 
+==6687== 6,400 bytes in 200 blocks are still reachable in loss record 7 of 9
+==6687==    at 0x4848899: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==6687==    by 0x109671: add_ll_node (functions.c:66)
+==6687==    by 0x109F39: malloc_f (functions.c:226)
+==6687==    by 0x10ACE9: run (functions.c:638)
+==6687==    by 0x10AE80: main (sfl.c:6)
+==6687== 
+==6687== 783,792 bytes in 32,658 blocks are still reachable in loss record 8 of 9
+==6687==    at 0x4848899: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==6687==    by 0x109542: init_heap (functions.c:38)
+==6687==    by 0x10AC55: run (functions.c:630)
+==6687==    by 0x10AE80: main (sfl.c:6)
+==6687== 
+==6687== 1,835,008 bytes in 1 blocks are still reachable in loss record 9 of 9
+==6687==    at 0x4848899: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==6687==    by 0x109335: init_heap (functions.c:11)
+==6687==    by 0x10AC55: run (functions.c:630)
+==6687==    by 0x10AE80: main (sfl.c:6)
+==6687== 
+==6687== LEAK SUMMARY:
+==6687==    definitely lost: 0 bytes in 0 blocks
+==6687==    indirectly lost: 0 bytes in 0 blocks
+==6687==      possibly lost: 0 bytes in 0 blocks
+==6687==    still reachable: 2,635,964 bytes in 32,923 blocks
+==6687==         suppressed: 0 bytes in 0 blocks
+==6687== 
+==6687== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

@@ -52,7 +52,7 @@ void fragment(size_t block_address, size_t block_size, size_t remaining_size,
 //   - allocated_blocks: Pointer to the linked list of allocated blocks
 //   - fragmentations: Pointer to the count of fragmentations
 //   - malloc_calls: Pointer to the count of malloc calls
-void malloc_f(size_t block_size, sfl_list_t **sfl_lists, size_t *lists_num,
+void malloc_f(sfl_list_t **sfl_lists, size_t *lists_num,
 	      ll_list_t *allocated_blocks, size_t *fragmentations,
 	      size_t *malloc_calls);
 
@@ -66,38 +66,61 @@ void malloc_f(size_t block_size, sfl_list_t **sfl_lists, size_t *lists_num,
 //   - heap_data: Pointer to the allocated memory for the heap
 //   - start_address: The starting address of the heap
 //   - free_calls: Pointer to the counter for the number of free calls
-void simple_free(size_t block_address, ll_list_t *allocated_blocks,
-		 sfl_list_t **sfl_lists, size_t *lists_num, void *heap_data,
+void simple_free(ll_list_t *allocated_blocks, sfl_list_t **sfl_lists,
+		 size_t block_address, size_t *lists_num, void *heap_data,
 		 size_t start_address, size_t *free_calls);
 
-// Function to read a block of memory
+// Function to free memory using segregated free lists and reconstruct the heap
 //
 // Parameters:
+//   - sfl_lists: Pointer to the array of segregated free lists
+//   -  lists_num: Pointer to the number of segregated free lists
 //   - allocated_blocks: Pointer to the linked list of allocated blocks
-//   - block_address: The address of the block to be read
-//   - read_size: The size of the block to be read
+//   - free_calls: Pointer to the counter for the number of free calls
+//   - reconstruct_type: The type of reconstruction to be done
 //   - heap_data: Pointer to the allocated memory for the heap
 //   - start_address: The starting address of the heap
-//
-// Returns:
-//   - true if the operation was successful, false otherwise
-bool read(ll_list_t *allocated_blocks, size_t block_address, size_t read_size,
-	  void *heap_data, size_t start_address);
+void free_f(sfl_list_t **sfl_lists, size_t *lists_num,
+	    ll_list_t *allocated_blocks, size_t *free_calls,
+	    size_t reconstruct_type, void *heap_data, size_t start_address);
 
-// Function to write a block of memory
+// Function to read from a block of memory and manage segmentation faults
 //
 // Parameters:
-//   - allocated_blocks: Pointer to the linked list of allocated blocks
-//   - block_address: The address of the block to be written
-//   - write_size: The size of the block to be written
+//   - allocated_blocks: The linked list of allocated blocks
 //   - heap_data: Pointer to the allocated memory for the heap
 //   - start_address: The starting address of the heap
-//   - text: Pointer to the block of memory to be written
+//   - command: The command to be executed
+//   - free_calls: The number of free calls
+//   - fragmentations: The number of fragmentations
+//   - malloc_calls: The number of malloc calls
+//   - sfl_lists: The array of segregated free lists
+//   - lists_num: The number of segregated free lists
 //
 // Returns:
-//   - true if the operation was successful, false otherwise
-bool write(ll_list_t *allocated_blocks, size_t block_address, size_t write_size,
-	   void *heap_data, size_t start_address, char *text);
+//   - True if the command was executed successfully, false otherwise
+bool read(ll_list_t allocated_blocks, void *heap_data, size_t start_address,
+	  char *command, size_t free_calls, size_t fragmentations,
+	  size_t malloc_calls, sfl_list_t *sfl_lists, size_t lists_num);
+
+// Function to write to a block of memory and manage segmentation faults
+//
+// Parameters:
+//   - allocated_blocks: The linked list of allocated blocks
+//   - heap_data: Pointer to the allocated memory for the heap
+//   - start_address: The starting address of the heap
+//   - command: The command to be executed
+//   - free_calls: The number of free calls
+//   - fragmentations: The number of fragmentations
+//   - malloc_calls: The number of malloc calls
+//   - sfl_lists: The array of segregated free lists
+//   - lists_num: The number of segregated free lists
+//
+// Returns:
+//   - True if the command was executed successfully, false otherwise
+bool write(ll_list_t allocated_blocks, void *heap_data, size_t start_address,
+	   char *command, size_t free_calls, size_t fragmentations,
+	   size_t malloc_calls, sfl_list_t *sfl_lists, size_t lists_num);
 
 // Function to dump the memory statistics
 //

@@ -196,10 +196,16 @@ void add_sfl_node(size_t block_address, size_t block_size,
 	}
 }
 
-void malloc_f(size_t block_size, sfl_list_t **sfl_lists, size_t *lists_num,
+void malloc_f(sfl_list_t **sfl_lists, size_t *lists_num,
 	      ll_list_t *allocated_blocks, size_t *fragmentations,
 	      size_t *malloc_calls)
 {
+	// Declare the variable for the block size
+	size_t block_size;
+
+	// Read the size of the block to be allocated
+	scanf("%lu", &block_size);
+
 	// Find the list with the smallest element size that can store the
 	// requested size
 	for (size_t i = 0; i < *lists_num; i++) {
@@ -236,8 +242,8 @@ void malloc_f(size_t block_size, sfl_list_t **sfl_lists, size_t *lists_num,
 	printf("Out of memory\n");
 }
 
-void simple_free(size_t block_address, ll_list_t *allocated_blocks,
-		 sfl_list_t **sfl_lists, size_t *lists_num, void *heap_data,
+void simple_free(ll_list_t *allocated_blocks, sfl_list_t **sfl_lists,
+		 size_t block_address, size_t *lists_num, void *heap_data,
 		 size_t start_address, size_t *free_calls)
 {
 	// Check if the address is NULL
@@ -248,6 +254,7 @@ void simple_free(size_t block_address, ll_list_t *allocated_blocks,
 		// Do nothing for free(NULL)
 		return;
 	}
+
 	// Find the block with the given address
 	for (ll_node_t *current_ll = allocated_blocks->head; current_ll;
 	     current_ll = current_ll->next) {
@@ -289,9 +296,34 @@ void simple_free(size_t block_address, ll_list_t *allocated_blocks,
 	printf("Invalid free\n");
 }
 
-bool read(ll_list_t *allocated_blocks, size_t block_address, size_t read_size,
-	  void *heap_data, size_t start_address)
+void free_f(sfl_list_t **sfl_lists, size_t *lists_num,
+	    ll_list_t *allocated_blocks, size_t *free_calls,
+	    size_t reconstruct_type, void *heap_data, size_t start_address)
 {
+	// Declare the variable for the block address
+	size_t block_address;
+
+	// Read the address of the block to be freed
+	scanf("%lx", &block_address);
+
+	if (reconstruct_type)
+		return;
+
+	// Free the block
+	simple_free(allocated_blocks, sfl_lists, block_address, lists_num,
+		    heap_data, start_address, free_calls);
+}
+
+bool read(ll_list_t allocated_blocks, void *heap_data, size_t start_address,
+	  char *command, size_t free_calls, size_t fragmentations,
+	  size_t malloc_calls, sfl_list_t *sfl_lists, size_t lists_num)
+{
+	// Declare the variables read for the input
+	size_t block_address, read_size;
+
+	// Read the address and the size of the block to be read
+	scanf("%lx %lu", &block_address, &read_size);
+
 	// Allocate memory for the block
 	char *text = malloc(read_size + 1);
 	DIE(!text, "Malloc failed while allocating text");
@@ -306,7 +338,7 @@ bool read(ll_list_t *allocated_blocks, size_t block_address, size_t read_size,
 	size_t i = 0;
 
 	// Find the block with the given address
-	for (ll_node_t *current = allocated_blocks->head; current;
+	for (ll_node_t *current = allocated_blocks.head; current;
 	     current = current->next) {
 		if (block_address ==
 		    (size_t)current->data - (size_t)heap_data + start_address) {
@@ -343,13 +375,36 @@ bool read(ll_list_t *allocated_blocks, size_t block_address, size_t read_size,
 	// Free the memory of the text
 	free(text);
 
+	// Dump the memory statistics
+	dump_memory(lists_num, malloc_calls, fragmentations, free_calls,
+		    sfl_lists, allocated_blocks, start_address, heap_data);
+
+	// Destroy the heap
+	destroy_heap(sfl_lists, lists_num, heap_data, allocated_blocks);
+
+	// Free the command
+	free(command);
+
 	// Return false if the text is not read completely
 	return false;
 }
 
-bool write(ll_list_t *allocated_blocks, size_t block_address, size_t write_size,
-	   void *heap_data, size_t start_address, char *text)
+bool write(ll_list_t allocated_blocks, void *heap_data, size_t start_address,
+	   char *command, size_t free_calls, size_t fragmentations,
+	   size_t malloc_calls, sfl_list_t *sfl_lists, size_t lists_num)
 {
+	// Declare the variables read for the input
+	size_t block_address, write_size;
+
+	// Read the address and the size of the block to be written
+	scanf("%lx", &block_address);
+
+	// Read the block
+	char *text = read_text();
+
+	// Read the size of the block to be written
+	scanf("%lu", &write_size);
+
 	// Calculate the original text size
 	size_t text_size = strlen(text);
 
@@ -360,7 +415,7 @@ bool write(ll_list_t *allocated_blocks, size_t block_address, size_t write_size,
 	size_t j = 0;
 
 	// Find the block with the given address
-	for (ll_node_t *current = allocated_blocks->head; current;
+	for (ll_node_t *current = allocated_blocks.head; current;
 	     current = current->next) {
 		if (block_address ==
 		    (size_t)current->data - (size_t)heap_data + start_address) {
@@ -377,15 +432,31 @@ bool write(ll_list_t *allocated_blocks, size_t block_address, size_t write_size,
 			block_address += i;
 
 			// Check if the text is written completely and return true
-			if (write_size == 0 || text_size == 0)
+			if (write_size == 0 || text_size == 0) {
+				// Free the memory of the block
+				free(text);
+
+				// Return true if the text is written completely
 				return true;
+			}
 		}
 	}
 
 	// If the address is not found, print an error message
 	printf("Segmentation fault (core dumped)\n");
 
-	// Return false if the text is not written completely
+	// Dump the memory statistics
+	dump_memory(lists_num, malloc_calls, fragmentations, free_calls,
+		    sfl_lists, allocated_blocks, start_address, heap_data);
+
+	// Destroy the heap
+	destroy_heap(sfl_lists, lists_num, heap_data, allocated_blocks);
+
+	// Free the command and the block
+	free(command);
+	free(text);
+
+	// Return false if the block is not written completely
 	return false;
 }
 
@@ -537,8 +608,7 @@ void run(void)
 	size_t fragmentations = 0;
 
 	// Declare the variables read for the input
-	size_t start_address, lists_num, bytes_per_list, reconstruct_type,
-		block_size, block_address;
+	size_t start_address, lists_num, bytes_per_list, reconstruct_type;
 
 	// Allocate memory for the command
 	char *command = (char *)malloc(COMMAND_SIZE * sizeof(char));
@@ -565,80 +635,24 @@ void run(void)
 				    free_calls, sfl_lists, allocated_blocks,
 				    start_address, heap_data);
 		} else if (!strcmp(command, "MALLOC")) {
-			// Read the size of the block to be allocated
-			scanf("%lu", &block_size);
-
-			malloc_f(block_size, &sfl_lists, &lists_num,
-				 &allocated_blocks, &fragmentations,
-				 &malloc_calls);
+			malloc_f(&sfl_lists, &lists_num, &allocated_blocks,
+				 &fragmentations, &malloc_calls);
 		} else if (!strcmp(command, "FREE")) {
-			// Read the address of the block to be freed
-			scanf("%lx", &block_address);
+			free_f(&sfl_lists, &lists_num, &allocated_blocks,
+			       &free_calls, reconstruct_type, heap_data,
+			       start_address);
 
-			// Free the memory of the block
-			if (reconstruct_type) {
-			} else {
-				simple_free(block_address, &allocated_blocks,
-					    &sfl_lists, &lists_num, heap_data,
-					    start_address, &free_calls);
-			}
 		} else if (!strcmp(command, "READ")) {
-			// Read the address and the size of the block to be read
-			scanf("%lx %lu", &block_address, &block_size);
-
-			// Read the block
-			if (!read(&allocated_blocks, block_address, block_size,
-				  heap_data, start_address)) {
-				// Dump the memory statistics
-				dump_memory(lists_num, malloc_calls,
-					    fragmentations, free_calls,
-					    sfl_lists, allocated_blocks,
-					    start_address, heap_data);
-
-				// Destroy the heap
-				destroy_heap(sfl_lists, lists_num, heap_data,
-					     allocated_blocks);
-
-				// Free the command
-				free(command);
-
-				// Exit the program
+			if (!read(allocated_blocks, heap_data, start_address,
+				  command, free_calls, fragmentations,
+				  malloc_calls, sfl_lists, lists_num))
 				return;
-			}
 
 		} else if (!strcmp(command, "WRITE")) {
-			// Read the address and the size of the block to be written
-			scanf("%lx", &block_address);
-
-			// Read the block
-			char *block = read_text();
-
-			// Read the size of the block to be written
-			scanf("%lu", &block_size);
-
-			// Write the block
-			if (!write(&allocated_blocks, block_address, block_size,
-				   heap_data, start_address, block)) {
-				// Dump the memory statistics
-				dump_memory(lists_num, malloc_calls,
-					    fragmentations, free_calls,
-					    sfl_lists, allocated_blocks,
-					    start_address, heap_data);
-
-				// Destroy the heap
-				destroy_heap(sfl_lists, lists_num, heap_data,
-					     allocated_blocks);
-
-				// Free the command and the block
-				free(command);
-				free(block);
-
-				// Exit the program
+			if (!write(allocated_blocks, heap_data, start_address,
+				   command, free_calls, fragmentations,
+				   malloc_calls, sfl_lists, lists_num))
 				return;
-			}
-
-			// Free the block
-			free(block);
 		} else if (!strcmp(command, "DESTROY_HEAP")) {
 			// Destroy the heap
 			destroy_heap(sfl_lists, lists_num, heap_data,
