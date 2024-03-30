@@ -314,11 +314,23 @@ ll_node_t *get_ll_node(ll_list_t allocated_blocks, size_t block_address,
 	return NULL;
 }
 
+bool is_power(size_t x)
+{
+	for (size_t i = 8; i <= x; i = i << 1)
+		if (i == x)
+			return true;
+
+	return false;
+}
+
 bool defragment(size_t *lists_num, sfl_list_t **sfl_lists,
 		size_t *block_address, size_t *block_size, void *heap_data,
 		size_t start_address)
 {
 	for (size_t i = 0; i < *lists_num; i++) {
+		if (is_power((*sfl_lists)[i].element_size))
+			continue;
+
 		for (sfl_node_t *current = (*sfl_lists)[i].head; current;
 		     current = current->next) {
 			if ((size_t)current->data - (size_t)heap_data +
@@ -326,8 +338,7 @@ bool defragment(size_t *lists_num, sfl_list_t **sfl_lists,
 					    (*sfl_lists)[i].element_size !=
 				    *block_address &&
 			    (size_t)current->data - (size_t)heap_data +
-					    start_address -
-					    (*sfl_lists)[i].element_size !=
+					    start_address - *block_size !=
 				    *block_address)
 				continue;
 
