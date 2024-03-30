@@ -279,15 +279,21 @@ ll_node_t *remove_ll_node(ll_list_t *allocated_blocks, size_t block_address,
 
 void simple_free(ll_list_t *allocated_blocks, sfl_list_t **sfl_lists,
 		 size_t block_address, size_t *lists_num, void *heap_data,
-		 size_t start_address, size_t block_size)
+		 size_t start_address, size_t block_size,
+		 size_t original_address)
 {
 	// Find the block with the given address
-	ll_node_t *current_ll = remove_ll_node(allocated_blocks, block_address,
-					       heap_data, start_address);
+	ll_node_t *current_ll = remove_ll_node(
+		allocated_blocks, original_address, heap_data, start_address);
+
+	if (!current_ll) {
+		printf("Invalid free\n");
+		return;
+	}
 
 	// Add the current node to the segregated free list
-	add_sfl_node((size_t)current_ll->data, block_size, sfl_lists,
-		     lists_num);
+	add_sfl_node(block_address + (size_t)heap_data - start_address,
+		     block_size, sfl_lists, lists_num);
 
 	// Free the memory of the current node
 	free(current_ll);
@@ -308,11 +314,68 @@ ll_node_t *get_ll_node(ll_list_t allocated_blocks, size_t block_address,
 	return NULL;
 }
 
-bool defragment()
+bool defragment(size_t *lists_num, sfl_list_t **sfl_lists,
+		size_t *block_address, size_t *block_size, void *heap_data,
+		size_t start_address)
 {
-	bool loop = false;
+	for (size_t i = 0; i < *lists_num; i++) {
+		for (sfl_node_t *current = (*sfl_lists)[i].head; current;
+		     current = current->next) {
+			if ((size_t)current->data - (size_t)heap_data +
+					    start_address +
+					    (*sfl_lists)[i].element_size !=
+				    *block_address &&
+			    (size_t)current->data - (size_t)heap_data +
+					    start_address -
+					    (*sfl_lists)[i].element_size !=
+				    *block_address)
+				continue;
 
-	return loop;
+			if ((size_t)current->data - (size_t)heap_data +
+				    start_address +
+				    (*sfl_lists)[i].element_size ==
+			    *block_address)
+				*block_address -= (*sfl_lists)[i].element_size;
+
+			*block_size += (*sfl_lists)[i].element_size;
+
+			// Remove the current node from the segregated free list
+			if (current->prev)
+				current->prev->next = current->next;
+			else
+				(*sfl_lists)[i].head = current->next;
+
+			// Reconnect the segregated free list
+			if (current->next)
+				current->next->prev = current->prev;
+
+			// Update the number of free blocks in the list
+			(*sfl_lists)[i].size -= 1;
+
+			// Check if the list is empty
+			if ((*sfl_lists)[i].size == 0) {
+				// Update the number of lists
+				*lists_num -= 1;
+
+				// Move the lists to the left
+				for (size_t j = i; j < *lists_num; j++)
+					(*sfl_lists)[j] = (*sfl_lists)[j + 1];
+
+				// Reallocate memory for the segregated free lists
+				*sfl_lists = realloc(
+					*sfl_lists,
+					*lists_num * sizeof(sfl_list_t));
+				DIE(!sfl_lists,
+				    "Realloc failed while reallocating sfl_lists");
+			}
+
+			free(current);
+
+			return true;
+		}
+	}
+
+	return false;
 }
 
 void free_f(sfl_list_t **sfl_lists, size_t *lists_num,
@@ -324,6 +387,8 @@ void free_f(sfl_list_t **sfl_lists, size_t *lists_num,
 
 	// Read the address of the block to be freed
 	scanf("%lx", &block_address);
+
+	size_t original_address = block_address;
 
 	if (block_address == 0) {
 		// Count free calls
@@ -348,11 +413,13 @@ void free_f(sfl_list_t **sfl_lists, size_t *lists_num,
 	bool loop = true;
 	if (reconstruct_type)
 		while (loop)
-			loop = defragment();
+			loop = defragment(lists_num, sfl_lists, &block_address,
+					  &block_size, heap_data,
+					  start_address);
 
 	// Free the block
 	simple_free(allocated_blocks, sfl_lists, block_address, lists_num,
-		    heap_data, start_address, block_size);
+		    heap_data, start_address, block_size, original_address);
 }
 
 bool read(ll_list_t allocated_blocks, void *heap_data, size_t start_address,
