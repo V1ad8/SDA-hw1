@@ -1,8 +1,8 @@
 #include "../header.h"
 
 void malloc_f(sfl_list_t **sfl_lists, size_t *lists_num,
-	      ll_list_t *allocated_blocks, size_t *fragmentations,
-	      size_t *malloc_calls)
+			  ll_list_t *allocated_blocks, size_t *fragmentations,
+			  size_t *malloc_calls)
 {
 	// Declare the variable for the block size
 	size_t block_size;
@@ -36,7 +36,7 @@ void malloc_f(sfl_list_t **sfl_lists, size_t *lists_num,
 			*fragmentations += 1;
 
 			add_sfl_node(block_address + block_size, remaining_size,
-				     sfl_lists, lists_num);
+						 sfl_lists, lists_num);
 		}
 
 		return;
@@ -47,8 +47,8 @@ void malloc_f(sfl_list_t **sfl_lists, size_t *lists_num,
 }
 
 bool defragmented(size_t *lists_num, sfl_list_t **sfl_lists,
-		  size_t *block_address, size_t *block_size, void *heap_data,
-		  size_t start_address)
+				  size_t *block_address, size_t *block_size, void *heap_data,
+				  size_t start_address)
 {
 	for (size_t i = 0; i < *lists_num; i++) {
 		if (is_power((*sfl_lists)[i].element_size))
@@ -96,9 +96,8 @@ bool defragmented(size_t *lists_num, sfl_list_t **sfl_lists,
 					(*sfl_lists)[j] = (*sfl_lists)[j + 1];
 
 				// Reallocate memory for the segregated free lists
-				*sfl_lists = realloc(
-					*sfl_lists,
-					*lists_num * sizeof(sfl_list_t));
+				*sfl_lists = realloc(*sfl_lists,
+									 *lists_num * sizeof(sfl_list_t));
 				DIE(!sfl_lists,
 				    "Realloc failed while reallocating sfl_lists");
 			}
@@ -113,8 +112,8 @@ bool defragmented(size_t *lists_num, sfl_list_t **sfl_lists,
 }
 
 void free_f(sfl_list_t **sfl_lists, size_t *lists_num,
-	    ll_list_t *allocated_blocks, size_t *free_calls,
-	    size_t reconstruct_type, void *heap_data, size_t start_address)
+			ll_list_t *allocated_blocks, size_t *free_calls,
+			size_t reconstruct_type, void *heap_data, size_t start_address)
 {
 	// Declare the variable for the block address
 	size_t block_address;
@@ -148,12 +147,12 @@ void free_f(sfl_list_t **sfl_lists, size_t *lists_num,
 	if (reconstruct_type)
 		while (loop)
 			loop = defragmented(lists_num, sfl_lists,
-					    &block_address, &block_size,
-					    heap_data, start_address);
+								&block_address, &block_size,
+								heap_data, start_address);
 
 	// Free the block
 	add_sfl_node(block_address + (size_t)heap_data - start_address,
-		     block_size, sfl_lists, lists_num);
+				 block_size, sfl_lists, lists_num);
 
 	free(current_ll);
 }

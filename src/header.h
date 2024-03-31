@@ -17,7 +17,7 @@
 // Returns:
 //   - The array of segregated free lists
 sfl_list_t *init_heap(size_t heap_start, size_t lists_num,
-		      size_t bytes_per_list, void **heap_data);
+					  size_t bytes_per_list, void **heap_data);
 
 // Function to free the memory of the heap
 //
@@ -27,9 +27,7 @@ sfl_list_t *init_heap(size_t heap_start, size_t lists_num,
 //   - heap_data: Pointer to the allocated memory for the heap
 //   - allocated_blocks: Linked list of allocated blocks
 void destroy_heap(sfl_list_t *sfl_lists, size_t lists_num, void *heap_data,
-		  ll_list_t allocated_blocks);
-
-
+				  ll_list_t allocated_blocks);
 
 // Functions from src/func/lists.c
 
@@ -45,7 +43,7 @@ void destroy_heap(sfl_list_t *sfl_lists, size_t lists_num, void *heap_data,
 // Returns:
 //   - The address of the block added
 size_t add_ll_node(sfl_list_t **sfl_lists, size_t index, size_t block_size,
-		   ll_list_t *allocated_blocks, size_t *lists_num);
+				   ll_list_t *allocated_blocks, size_t *lists_num);
 
 // Function to add a node to the segregated free list
 //
@@ -55,7 +53,7 @@ size_t add_ll_node(sfl_list_t **sfl_lists, size_t index, size_t block_size,
 //   - sfl_lists: Pointer to the array of segregated free lists
 //   - lists_num: Pointer to the number of segregated free lists
 void add_sfl_node(size_t block_address, size_t block_size,
-		  sfl_list_t **sfl_lists, size_t *lists_num);
+				  sfl_list_t **sfl_lists, size_t *lists_num);
 
 // Function to remove a node from the linked list of allocated blocks
 //
@@ -68,9 +66,7 @@ void add_sfl_node(size_t block_address, size_t block_size,
 // Returns:
 //   - A pointer to the node removed
 ll_node_t *remove_ll_node(ll_list_t *allocated_blocks, size_t block_address,
-			  void *heap_data, size_t start_address);
-
-
+						  void *heap_data, size_t start_address);
 
 // Functions from src/func/memory.c
 
@@ -84,8 +80,8 @@ ll_node_t *remove_ll_node(ll_list_t *allocated_blocks, size_t block_address,
 //   - fragmentations: Pointer to the count of fragmentations
 //   - malloc_calls: Pointer to the count of malloc calls
 void malloc_f(sfl_list_t **sfl_lists, size_t *lists_num,
-	      ll_list_t *allocated_blocks, size_t *fragmentations,
-	      size_t *malloc_calls);
+			  ll_list_t *allocated_blocks, size_t *fragmentations,
+			  size_t *malloc_calls);
 
 // Function to unite the block that needs to be freed to adjacent free blocks
 //
@@ -100,8 +96,8 @@ void malloc_f(sfl_list_t **sfl_lists, size_t *lists_num,
 // Returns:
 //	 - true if it united blocks, false otherwise
 bool defragment(size_t *lists_num, sfl_list_t **sfl_lists,
-		size_t *block_address, size_t *block_size, void *heap_data,
-		size_t start_address);
+				size_t *block_address, size_t *block_size, void *heap_data,
+				size_t start_address);
 
 // Function to free memory using segregated free lists
 //
@@ -114,10 +110,8 @@ bool defragment(size_t *lists_num, sfl_list_t **sfl_lists,
 //   - heap_data: Pointer to the allocated memory for the heap
 //   - start_address: The starting address of the heap
 void free_f(sfl_list_t **sfl_lists, size_t *lists_num,
-	    ll_list_t *allocated_blocks, size_t *free_calls,
-	    size_t reconstruct_type, void *heap_data, size_t start_address);
-
-
+			ll_list_t *allocated_blocks, size_t *free_calls,
+			size_t reconstruct_type, void *heap_data, size_t start_address);
 
 // Functions from src/func/read-write.c
 
@@ -137,8 +131,8 @@ void free_f(sfl_list_t **sfl_lists, size_t *lists_num,
 // Returns:
 //   - True if the command was executed successfully, false otherwise
 bool read(ll_list_t allocated_blocks, void *heap_data, size_t start_address,
-	  char *command, size_t free_calls, size_t fragmentations,
-	  size_t malloc_calls, sfl_list_t *sfl_lists, size_t lists_num);
+		  char *command, size_t free_calls, size_t fragmentations,
+		  size_t malloc_calls, sfl_list_t *sfl_lists, size_t lists_num);
 
 // Function to write to a block of memory and manage segmentation faults
 //
@@ -156,8 +150,8 @@ bool read(ll_list_t allocated_blocks, void *heap_data, size_t start_address,
 // Returns:
 //   - True if the command was executed successfully, false otherwise
 bool write(ll_list_t allocated_blocks, void *heap_data, size_t start_address,
-	   char *command, size_t free_calls, size_t fragmentations,
-	   size_t malloc_calls, sfl_list_t *sfl_lists, size_t lists_num);
+		   char *command, size_t free_calls, size_t fragmentations,
+		   size_t malloc_calls, sfl_list_t *sfl_lists, size_t lists_num);
 
 // Function to dump the memory statistics
 //
@@ -171,11 +165,9 @@ bool write(ll_list_t allocated_blocks, void *heap_data, size_t start_address,
 //   - start_address: The starting address of the heap
 //   - heap_data: Pointer to the allocated memory for the heap
 void dump_memory(size_t lists_num, size_t malloc_calls, size_t fragmentations,
-		 size_t free_calls, sfl_list_t *sfl_lists,
-		 ll_list_t allocated_blocks, size_t start_address,
-		 void *heap_data);
-
-
+				 size_t free_calls, sfl_list_t *sfl_lists,
+				 ll_list_t allocated_blocks, size_t start_address,
+				 void *heap_data);
 
 // Functions from src/func/utils.c
 

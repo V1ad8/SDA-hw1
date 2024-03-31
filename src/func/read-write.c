@@ -1,8 +1,8 @@
 #include "../header.h"
 
 bool read(ll_list_t allocated_blocks, void *heap_data, size_t start_address,
-	  char *command, size_t free_calls, size_t fragmentations,
-	  size_t malloc_calls, sfl_list_t *sfl_lists, size_t lists_num)
+		  char *command, size_t free_calls, size_t fragmentations,
+		  size_t malloc_calls, sfl_list_t *sfl_lists, size_t lists_num)
 {
 	// Declare the variables read for the input
 	size_t block_address, read_size;
@@ -63,7 +63,7 @@ bool read(ll_list_t allocated_blocks, void *heap_data, size_t start_address,
 
 	// Dump the memory statistics
 	dump_memory(lists_num, malloc_calls, fragmentations, free_calls,
-		    sfl_lists, allocated_blocks, start_address, heap_data);
+				sfl_lists, allocated_blocks, start_address, heap_data);
 
 	// Destroy the heap
 	destroy_heap(sfl_lists, lists_num, heap_data, allocated_blocks);
@@ -76,8 +76,8 @@ bool read(ll_list_t allocated_blocks, void *heap_data, size_t start_address,
 }
 
 bool write(ll_list_t allocated_blocks, void *heap_data, size_t start_address,
-	   char *command, size_t free_calls, size_t fragmentations,
-	   size_t malloc_calls, sfl_list_t *sfl_lists, size_t lists_num)
+		   char *command, size_t free_calls, size_t fragmentations,
+		   size_t malloc_calls, sfl_list_t *sfl_lists, size_t lists_num)
 {
 	// Declare the variables read for the input
 	size_t block_address, write_size;
@@ -107,7 +107,7 @@ bool write(ll_list_t allocated_blocks, void *heap_data, size_t start_address,
 		    (size_t)current->data - (size_t)heap_data + start_address) {
 			// Copy the data from the text to the allocated memory
 			for (i = 0; i < write_size && i < current->size &&
-				    i < text_size;
+				 i < text_size;
 			     i++, j++) {
 				*((char *)current->data + i) = text[j];
 			}
@@ -133,7 +133,7 @@ bool write(ll_list_t allocated_blocks, void *heap_data, size_t start_address,
 
 	// Dump the memory statistics
 	dump_memory(lists_num, malloc_calls, fragmentations, free_calls,
-		    sfl_lists, allocated_blocks, start_address, heap_data);
+				sfl_lists, allocated_blocks, start_address, heap_data);
 
 	// Destroy the heap
 	destroy_heap(sfl_lists, lists_num, heap_data, allocated_blocks);
@@ -147,8 +147,8 @@ bool write(ll_list_t allocated_blocks, void *heap_data, size_t start_address,
 }
 
 void dump_memory(size_t lists_num, size_t malloc_calls, size_t fragmentations,
-		 size_t free_calls, sfl_list_t *sfl_lists,
-		 ll_list_t allocated_blocks, size_t start_address,
+				 size_t free_calls, sfl_list_t *sfl_lists,
+				 ll_list_t allocated_blocks, size_t start_address,
 		 void *heap_data)
 {
 	printf("+++++DUMP+++++\n");

@@ -1,7 +1,7 @@
 #include "../header.h"
 
 sfl_list_t *init_heap(size_t heap_start, size_t lists_num,
-		      size_t bytes_per_list, void **heap_data)
+					  size_t bytes_per_list, void **heap_data)
 {
 	// Allocate memory for the heap
 	*heap_data = malloc(lists_num * bytes_per_list);
@@ -56,7 +56,7 @@ sfl_list_t *init_heap(size_t heap_start, size_t lists_num,
 }
 
 void destroy_heap(sfl_list_t *sfl_lists, size_t lists_num, void *heap_data,
-		  ll_list_t allocated_blocks)
+				  ll_list_t allocated_blocks)
 {
 	// Free the memory of the segregated free lists's nodes
 	for (size_t i = 0; i < lists_num; i++) {

@@ -1,7 +1,7 @@
 #include "../header.h"
 
 size_t add_ll_node(sfl_list_t **sfl_lists, size_t index, size_t block_size,
-		   ll_list_t *allocated_blocks, size_t *lists_num)
+				   ll_list_t *allocated_blocks, size_t *lists_num)
 {
 	// Allocate memory for a new node in the allocated blocks list
 	ll_node_t *new_ll = malloc(sizeof(ll_node_t));
@@ -70,7 +70,7 @@ size_t add_ll_node(sfl_list_t **sfl_lists, size_t index, size_t block_size,
 }
 
 void add_sfl_node(size_t block_address, size_t block_size,
-		  sfl_list_t **sfl_lists, size_t *lists_num)
+				  sfl_list_t **sfl_lists, size_t *lists_num)
 {
 	// Allocate memory for a new node in the segregated free list
 	sfl_node_t *new_sfl = malloc(sizeof(sfl_node_t));
@@ -138,7 +138,7 @@ void add_sfl_node(size_t block_address, size_t block_size,
 }
 
 ll_node_t *remove_ll_node(ll_list_t *allocated_blocks, size_t block_address,
-			  void *heap_data, size_t start_address)
+						  void *heap_data, size_t start_address)
 {
 	// Find the block with the given address
 	for (ll_node_t *current_ll = allocated_blocks->head; current_ll;
