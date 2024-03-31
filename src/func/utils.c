@@ -63,41 +63,39 @@ void run(void)
 		if (!strcmp(command, "INIT_HEAP")) {
 			// Read the parameters for the INIT_HEAP command
 			scanf("%lx %lu %lu %lu", &start_address, &lists_num,
-			      &bytes_per_list, &reconstruct_type);
+				  &bytes_per_list, &reconstruct_type);
 
 			// Initialize the heap
-			sfl_lists = init_heap(start_address, lists_num,
-								  bytes_per_list, &heap_data);
-		} else if (!strcmp(command, "DUMP_MEMORY")) {
-			// Dump the memory statistics
-			dump_memory(lists_num, malloc_calls, fragmentations,
-						free_calls, sfl_lists, allocated_blocks,
-						start_address, heap_data);
+			sfl_lists =
+				init_heap(start_address, lists_num, bytes_per_list, &heap_data);
 		} else if (!strcmp(command, "MALLOC")) {
 			// Allocate memory
-			malloc_f(&sfl_lists, &lists_num, &allocated_blocks,
-					 &fragmentations, &malloc_calls);
+			malloc_f(&sfl_lists, &lists_num, &allocated_blocks, &fragmentations,
+					 &malloc_calls);
 		} else if (!strcmp(command, "FREE")) {
 			// Free memory
-			free_f(&sfl_lists, &lists_num, &allocated_blocks,
-			       &free_calls, reconstruct_type, heap_data,
-			       start_address);
+			free_f(&sfl_lists, &lists_num, &allocated_blocks, &free_calls,
+				   reconstruct_type, heap_data, start_address);
 		} else if (!strcmp(command, "READ")) {
 			// Read the block
-			if (!read(allocated_blocks, heap_data, start_address,
-					  command, free_calls, fragmentations,
-					  malloc_calls, sfl_lists, lists_num))
+			if (!read(allocated_blocks, heap_data, start_address, command,
+					  free_calls, fragmentations, malloc_calls, sfl_lists,
+					  lists_num))
 				return;
 		} else if (!strcmp(command, "WRITE")) {
 			// Write the block
-			if (!write(allocated_blocks, heap_data, start_address,
-					   command, free_calls, fragmentations,
-					   malloc_calls, sfl_lists, lists_num))
+			if (!write(allocated_blocks, heap_data, start_address, command,
+					   free_calls, fragmentations, malloc_calls, sfl_lists,
+					   lists_num))
 				return;
+		} else if (!strcmp(command, "DUMP_MEMORY")) {
+			// Dump the memory statistics
+			dump_memory(lists_num, malloc_calls, fragmentations, free_calls,
+						sfl_lists, allocated_blocks, start_address, heap_data);
+
 		} else if (!strcmp(command, "DESTROY_HEAP")) {
 			// Destroy the heap
-			destroy_heap(sfl_lists, lists_num, heap_data,
-						 allocated_blocks);
+			destroy_heap(sfl_lists, lists_num, heap_data, allocated_blocks);
 
 			// Exit the program
 			free(command);

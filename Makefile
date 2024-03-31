@@ -1,10 +1,15 @@
-.PHONY: build, clean
+.PHONY: build clean run_sfl
 
-build:
-	gcc -Wall -Wextra -pedantic -g -ggdb -O0 -march=native src/main.c src/func/*.c -o sfl
+build: sfl
 
-run:
+sfl: src/main.c src/func/*.c
+	gcc -Wall -Wextra -std=c99 src/main.c src/func/*.c -o sfl
+
+run_sfl: sfl
 	./sfl
 
 clean:
 	rm -f sfl
+
+pack:
+	zip -FSr 315CA_UngureanuVlad-Marin_Homework1.zip README.md Makefile src/

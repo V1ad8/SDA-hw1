@@ -149,7 +149,7 @@ bool write(ll_list_t allocated_blocks, void *heap_data, size_t start_address,
 void dump_memory(size_t lists_num, size_t malloc_calls, size_t fragmentations,
 				 size_t free_calls, sfl_list_t *sfl_lists,
 				 ll_list_t allocated_blocks, size_t start_address,
-		 void *heap_data)
+				 void *heap_data)
 {
 	printf("+++++DUMP+++++\n");
 
