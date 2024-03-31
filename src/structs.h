@@ -1,6 +1,9 @@
 #ifndef STRUCTURES_H_
 #define STRUCTURES_H_
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <stddef.h>
 
 // The size of the command from the input
