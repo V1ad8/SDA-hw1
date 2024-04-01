@@ -3,6 +3,8 @@
 sfl_list_t *init_heap(size_t heap_start, size_t lists_num,
 					  size_t bytes_per_list, void **heap_data)
 {
+	size_t index = 0;
+
 	// Allocate memory for the heap
 	*heap_data = malloc(lists_num * bytes_per_list);
 	DIE(!*heap_data, "Malloc failed while allocating heap_data");
@@ -23,22 +25,22 @@ sfl_list_t *init_heap(size_t heap_start, size_t lists_num,
 
 		// Create the head node for the current list
 		sfl_node_t *previous = malloc(sizeof(sfl_node_t));
-		DIE(!previous,
-		    "Malloc failed while allocating node for sfl_lists[i]");
+		DIE(!previous, "Malloc failed while allocating node for sfl_lists[i]");
 		sfl_lists[i].head = previous;
 		previous->data = (void *)(heap_start + i * bytes_per_list);
 		previous->prev = NULL;
+		previous->index = index++;
 
 		// Create the remaining nodes for the current list
 		for (size_t j = 1; j < sfl_lists[i].size; j++) {
 			sfl_node_t *current = malloc(sizeof(sfl_node_t));
 			DIE(!current,
-			    "Malloc failed while allocating node for sfl_lists[i]");
+				"Malloc failed while allocating node for sfl_lists[i]");
 
 			// Set the data of the current node
-			current->data =
-				(void *)(heap_start + i * bytes_per_list +
-					 j * sfl_lists[i].element_size);
+			current->data = (void *)(heap_start + i * bytes_per_list +
+									 j * sfl_lists[i].element_size);
+			current->index = index++;
 
 			// Connect the current node to the previous one
 			previous->next = current;

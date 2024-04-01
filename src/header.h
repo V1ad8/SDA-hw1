@@ -53,7 +53,7 @@ size_t add_ll_node(sfl_list_t **sfl_lists, size_t index, size_t block_size,
 //   - sfl_lists: Pointer to the array of segregated free lists
 //   - lists_num: Pointer to the number of segregated free lists
 void add_sfl_node(size_t block_address, size_t block_size,
-				  sfl_list_t **sfl_lists, size_t *lists_num);
+				  sfl_list_t **sfl_lists, size_t *lists_num, size_t parent_id);
 
 // Function to remove a node from the linked list of allocated blocks
 //
@@ -97,7 +97,7 @@ void malloc_f(sfl_list_t **sfl_lists, size_t *lists_num,
 //	 - true if it united blocks, false otherwise
 bool defragment(size_t *lists_num, sfl_list_t **sfl_lists,
 				size_t *block_address, size_t *block_size, void *heap_data,
-				size_t start_address);
+				size_t start_address, size_t parent_id);
 
 // Function to free memory using segregated free lists
 //
