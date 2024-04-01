@@ -15,7 +15,7 @@ void malloc_f(sfl_list_t **sfl_lists, size_t *lists_num,
 	for (size_t i = 0; i < *lists_num; i++) {
 		// If the current list is too small or empty, continue
 		if ((*sfl_lists)[i].element_size < block_size ||
-		    !(*sfl_lists)[i].head) {
+			!(*sfl_lists)[i].head) {
 			continue;
 		}
 
@@ -23,20 +23,19 @@ void malloc_f(sfl_list_t **sfl_lists, size_t *lists_num,
 		*malloc_calls += 1;
 
 		// Calculate the remaining size
-		size_t remaining_size =
-			(*sfl_lists)[i].element_size - block_size;
+		size_t remaining_size = (*sfl_lists)[i].element_size - block_size;
 
 		// Add a new node to the allocated blocks list and save the address
-		size_t block_address = add_ll_node(sfl_lists, i, block_size,
-						   allocated_blocks, lists_num);
+		size_t block_address =
+			add_ll_node(sfl_lists, i, block_size, allocated_blocks, lists_num);
 
 		// Add the remaining memory to the next list
 		if (remaining_size) {
 			// Count fragmentations of the memory
 			*fragmentations += 1;
 
-			add_sfl_node(block_address + block_size, remaining_size,
-						 sfl_lists, lists_num);
+			add_sfl_node(block_address + block_size, remaining_size, sfl_lists,
+						 lists_num);
 		}
 
 		return;
@@ -46,29 +45,47 @@ void malloc_f(sfl_list_t **sfl_lists, size_t *lists_num,
 	printf("Out of memory\n");
 }
 
+bool same_parent(size_t first_address, size_t second_address, void *heap_data,
+				 size_t bytes_per_list)
+{
+	// first_address -= (size_t)heap_data;
+	second_address -= (size_t)heap_data;
+
+	if (first_address / bytes_per_list != second_address / bytes_per_list) {
+		return false;
+	}
+
+	size_t parent = first_address / bytes_per_list;
+	size_t size = 8 * (1 << parent);
+
+	first_address = first_address % bytes_per_list;
+	second_address = second_address % bytes_per_list;
+
+	return (first_address / size == second_address / size);
+}
+
 bool defragmented(size_t *lists_num, sfl_list_t **sfl_lists,
 				  size_t *block_address, size_t *block_size, void *heap_data,
-				  size_t start_address)
+				  size_t start_address, size_t bytes_per_list)
 {
 	for (size_t i = 0; i < *lists_num; i++) {
-		if (is_power((*sfl_lists)[i].element_size))
-			continue;
-
 		for (sfl_node_t *current = (*sfl_lists)[i].head; current;
-		     current = current->next) {
-			if ((size_t)current->data - (size_t)heap_data +
-					    start_address +
-					    (*sfl_lists)[i].element_size !=
-				    *block_address &&
-			    (size_t)current->data - (size_t)heap_data +
-					    start_address - *block_size !=
-				    *block_address)
+			 current = current->next) {
+			if (!same_parent(*block_address - start_address,
+							 (size_t)current->data, heap_data, bytes_per_list))
 				continue;
 
-			if ((size_t)current->data - (size_t)heap_data +
-				    start_address +
-				    (*sfl_lists)[i].element_size ==
-			    *block_address)
+			if ((size_t)current->data - (size_t)heap_data + start_address +
+						(*sfl_lists)[i].element_size !=
+					*block_address &&
+				(size_t)current->data - (size_t)heap_data + start_address -
+						*block_size !=
+					*block_address)
+				continue;
+
+			if ((size_t)current->data - (size_t)heap_data + start_address +
+					(*sfl_lists)[i].element_size ==
+				*block_address)
 				*block_address -= (*sfl_lists)[i].element_size;
 
 			*block_size += (*sfl_lists)[i].element_size;
@@ -96,10 +113,9 @@ bool defragmented(size_t *lists_num, sfl_list_t **sfl_lists,
 					(*sfl_lists)[j] = (*sfl_lists)[j + 1];
 
 				// Reallocate memory for the segregated free lists
-				*sfl_lists = realloc(*sfl_lists,
-									 *lists_num * sizeof(sfl_list_t));
-				DIE(!sfl_lists,
-				    "Realloc failed while reallocating sfl_lists");
+				*sfl_lists =
+					realloc(*sfl_lists, *lists_num * sizeof(sfl_list_t));
+				DIE(!sfl_lists, "Realloc failed while reallocating sfl_lists");
 			}
 
 			free(current);
@@ -113,7 +129,8 @@ bool defragmented(size_t *lists_num, sfl_list_t **sfl_lists,
 
 void free_f(sfl_list_t **sfl_lists, size_t *lists_num,
 			ll_list_t *allocated_blocks, size_t *free_calls,
-			size_t reconstruct_type, void *heap_data, size_t start_address)
+			size_t reconstruct_type, void *heap_data, size_t start_address,
+			size_t bytes_per_list)
 {
 	// Declare the variable for the block address
 	size_t block_address;
@@ -132,7 +149,7 @@ void free_f(sfl_list_t **sfl_lists, size_t *lists_num,
 	}
 
 	ll_node_t *current_ll = remove_ll_node(allocated_blocks, block_address,
-					       heap_data, start_address);
+										   heap_data, start_address);
 	if (!current_ll) {
 		printf("Invalid free\n");
 		return;
@@ -146,13 +163,13 @@ void free_f(sfl_list_t **sfl_lists, size_t *lists_num,
 	bool loop = true;
 	if (reconstruct_type)
 		while (loop)
-			loop = defragmented(lists_num, sfl_lists,
-								&block_address, &block_size,
-								heap_data, start_address);
+			loop = defragmented(lists_num, sfl_lists, &block_address,
+								&block_size, heap_data, start_address,
+								bytes_per_list);
 
 	// Free the block
-	add_sfl_node(block_address + (size_t)heap_data - start_address,
-				 block_size, sfl_lists, lists_num);
+	add_sfl_node(block_address + (size_t)heap_data - start_address, block_size,
+				 sfl_lists, lists_num);
 
 	free(current_ll);
 }

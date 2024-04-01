@@ -111,7 +111,8 @@ bool defragment(size_t *lists_num, sfl_list_t **sfl_lists,
 //   - start_address: The starting address of the heap
 void free_f(sfl_list_t **sfl_lists, size_t *lists_num,
 			ll_list_t *allocated_blocks, size_t *free_calls,
-			size_t reconstruct_type, void *heap_data, size_t start_address);
+			size_t reconstruct_type, void *heap_data, size_t start_address,
+			size_t bytes_per_list);
 
 // Functions from src/func/read-write.c
 

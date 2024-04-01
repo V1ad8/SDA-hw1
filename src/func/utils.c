@@ -75,7 +75,7 @@ void run(void)
 		} else if (!strcmp(command, "FREE")) {
 			// Free memory
 			free_f(&sfl_lists, &lists_num, &allocated_blocks, &free_calls,
-				   reconstruct_type, heap_data, start_address);
+				   reconstruct_type, heap_data, start_address, bytes_per_list);
 		} else if (!strcmp(command, "READ")) {
 			// Read the block
 			if (!read(allocated_blocks, heap_data, start_address, command,
