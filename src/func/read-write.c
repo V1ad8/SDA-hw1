@@ -25,33 +25,33 @@ bool read(ll_list_t allocated_blocks, void *heap_data, size_t start_address,
 
 	// Find the block with the given address
 	for (ll_node_t *current = allocated_blocks.head; current;
-	     current = current->next) {
-		if (block_address ==
-		    (size_t)current->data - (size_t)heap_data + start_address) {
-			// Copy the data from the allocated memory to the text
-			for (i = 0, read = 0;
-			     i < read_size && i < current->size; i++, read++) {
-				text[j++] = *((char *)current->data + i);
-			}
+		 current = current->next) {
+		// Check if the address is found
+		if (block_address !=
+			(size_t)current->data - (size_t)heap_data + start_address)
+			continue;
 
-			// Update the size and address
-			read_size -= read;
-			block_address += read;
+		// Copy the data from the allocated memory to the text
+		for (i = 0, read = 0; i < read_size && i < current->size; i++, read++)
+			text[j++] = *((char *)current->data + i);
 
-			// Check if the text is read completely
-			if (read_size == 0) {
-				// Add the null terminator
-				text[j] = '\0';
+		// Update the size and address
+		read_size -= read;
+		block_address += read;
 
-				// Print the text
-				printf("%s\n", text);
+		// Check if the text is read completely
+		if (read_size == 0) {
+			// Add the null terminator
+			text[j] = '\0';
 
-				// Free the memory of the text
-				free(text);
+			// Print the text
+			printf("%s\n", text);
 
-				// Return true if the text is read completely
-				return true;
-			}
+			// Free the memory of the text
+			free(text);
+
+			// Return true if the text is read completely
+			return true;
 		}
 	}
 
@@ -62,8 +62,8 @@ bool read(ll_list_t allocated_blocks, void *heap_data, size_t start_address,
 	free(text);
 
 	// Dump the memory statistics
-	dump_memory(lists_num, malloc_calls, fragmentations, free_calls,
-				sfl_lists, allocated_blocks, start_address, heap_data);
+	dump_memory(lists_num, malloc_calls, fragmentations, free_calls, sfl_lists,
+				allocated_blocks, start_address, heap_data);
 
 	// Destroy the heap
 	destroy_heap(sfl_lists, lists_num, heap_data, allocated_blocks);
@@ -102,29 +102,30 @@ bool write(ll_list_t allocated_blocks, void *heap_data, size_t start_address,
 
 	// Find the block with the given address
 	for (ll_node_t *current = allocated_blocks.head; current;
-	     current = current->next) {
-		if (block_address ==
-		    (size_t)current->data - (size_t)heap_data + start_address) {
-			// Copy the data from the text to the allocated memory
-			for (i = 0; i < write_size && i < current->size &&
-				 i < text_size;
-			     i++, j++) {
-				*((char *)current->data + i) = text[j];
-			}
+		 current = current->next) {
+		// Check if the address is found
+		if (block_address !=
+			(size_t)current->data - (size_t)heap_data + start_address)
+			continue;
 
-			// Update the size, address and text size
-			write_size -= i;
-			text_size -= i;
-			block_address += i;
+		// Copy the data from the text to the allocated memory
+		for (i = 0; i < write_size && i < current->size && i < text_size;
+			 i++, j++) {
+			*((char *)current->data + i) = text[j];
+		}
 
-			// Check if the text is written completely and return true
-			if (write_size == 0 || text_size == 0) {
-				// Free the memory of the block
-				free(text);
+		// Update the size, address and text size
+		write_size -= i;
+		text_size -= i;
+		block_address += i;
 
-				// Return true if the text is written completely
-				return true;
-			}
+		// Check if the text is written completely and return true
+		if (write_size == 0 || text_size == 0) {
+			// Free the memory of the block
+			free(text);
+
+			// Return true if the text is written completely
+			return true;
 		}
 	}
 
@@ -132,8 +133,8 @@ bool write(ll_list_t allocated_blocks, void *heap_data, size_t start_address,
 	printf("Segmentation fault (core dumped)\n");
 
 	// Dump the memory statistics
-	dump_memory(lists_num, malloc_calls, fragmentations, free_calls,
-				sfl_lists, allocated_blocks, start_address, heap_data);
+	dump_memory(lists_num, malloc_calls, fragmentations, free_calls, sfl_lists,
+				allocated_blocks, start_address, heap_data);
 
 	// Destroy the heap
 	destroy_heap(sfl_lists, lists_num, heap_data, allocated_blocks);
@@ -164,7 +165,7 @@ void dump_memory(size_t lists_num, size_t malloc_calls, size_t fragmentations,
 	// Calculate the total allocated memory
 	size_t allocated_memory = 0;
 	for (ll_node_t *current = allocated_blocks.head; current;
-	     current = current->next) {
+		 current = current->next) {
 		allocated_memory += current->size;
 	}
 
@@ -184,20 +185,17 @@ void dump_memory(size_t lists_num, size_t malloc_calls, size_t fragmentations,
 	// Print blocks with their respective sizes and number of free blocks
 	for (size_t i = 0; i < lists_num; i++) {
 		printf("Blocks with %lu bytes - %lu free block(s) : ",
-		       sfl_lists[i].element_size, sfl_lists[i].size);
+			   sfl_lists[i].element_size, sfl_lists[i].size);
 
 		// Print the addresses of the free blocks
-		if (sfl_lists[i].head) {
-			for (sfl_node_t *current = sfl_lists[i].head; current;
-			     current = current->next) {
-				printf("0x%lx", (size_t)current->data -
-							(size_t)heap_data +
-							start_address);
+		for (sfl_node_t *current = sfl_lists[i].head; current;
+			 current = current->next) {
+			printf("0x%lx",
+				   (size_t)current->data - (size_t)heap_data + start_address);
 
-				// Print a space if there are more blocks
-				if (current->next)
-					printf(" ");
-			}
+			// Print a space if there are more blocks
+			if (current->next)
+				printf(" ");
 		}
 
 		printf("\n");
@@ -209,11 +207,10 @@ void dump_memory(size_t lists_num, size_t malloc_calls, size_t fragmentations,
 		printf(" ");
 
 		for (ll_node_t *current = allocated_blocks.head; current;
-		     current = current->next) {
+			 current = current->next) {
 			printf("(0x%lx - %lu)",
-			       (size_t)current->data - (size_t)heap_data +
-				       start_address,
-			       current->size);
+				   (size_t)current->data - (size_t)heap_data + start_address,
+				   current->size);
 
 			// Print a space if there are more blocks
 			if (current->next)

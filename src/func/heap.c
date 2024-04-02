@@ -18,7 +18,6 @@ sfl_list_t *init_heap(size_t heap_start, size_t lists_num,
 	for (size_t i = 0; i < lists_num; i++) {
 		// Calculate the element size and size of the current list
 		sfl_lists[i].element_size = 8 * (1 << i);
-
 		sfl_lists[i].size = bytes_per_list / sfl_lists[i].element_size;
 
 		// Create the head node for the current list

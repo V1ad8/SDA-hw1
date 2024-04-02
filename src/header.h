@@ -172,14 +172,18 @@ void dump_memory(size_t lists_num, size_t malloc_calls, size_t fragmentations,
 
 // Functions from src/func/utils.c
 
-// Function to tell if a number is 8 * 2^n
+// Function to find if two blocks come from the same parent block
 //
 // Parameters:
-//   - x: The number to check
+//   - first_address: The address of the first block
+//   - second_address: The address of the second block
+//   - heap_data: Pointer to the allocated memory for the heap
+//   - bytes_per_list: The number of bytes per list
 //
 // Returns:
-//   - True if the number is 8 * 2^n, false otherwise
-bool is_power(size_t x);
+//   - True if the two blocks come from the same parent block, false otherwise
+bool same_parent(size_t first_address, size_t second_address, void *heap_data,
+				 size_t bytes_per_list);
 
 // Function to read a block of memory placed in between quotation marks
 //
