@@ -39,16 +39,16 @@ The program also provides a bonus feature for reconstituting fragmented memory b
 To use the program, follow these steps:
 * Compile the program with the *`make build`* rule within the provided Makefile
 ```c
-vlad@laptop:~SDA/hwks/hwk1$ make build
+vlad@laptop:~SDA/hws/hw1$ make build
 gcc -Wall -Wextra -std=c99 src/main.c src/func/*.c -o sfl
 ```
 * Run the program
 ```bash
-vlad@laptop:~SDA/hwks/hwk1$ ./sfl
+vlad@laptop:~SDA/hws/hw1$ ./sfl
 ```
 Or just use the *`run_sfl`* rule from the Makefile
 ```bash
-vlad@laptop:~SDA/hwks/hwk1$ make run_sfl 
+vlad@laptop:~SDA/hws/hw1$ make run_sfl 
 gcc -Wall -Wextra -std=c99 src/main.c src/func/*.c -o sfl
 ./sfl
 ```
