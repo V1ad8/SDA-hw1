@@ -18,7 +18,6 @@ typedef enum { false, true } bool;
 // Structure for a node in the segregated free list
 typedef struct sfl_node_t {
 	void *data;
-	size_t index; // The index of the node in the list
 	struct sfl_node_t *next, *prev;
 } sfl_node_t;
 
@@ -29,15 +28,14 @@ typedef struct sfl_list_t {
 	size_t element_size; // The size of the elements in the list
 } sfl_list_t;
 
-// Structure for a node in the linked list
+// Structure for a node in the allocated blocks list
 typedef struct ll_node_t {
 	void *data;
-	size_t parent_id; // The id of the parent node
 	size_t size; // The size of the data in the node
 	struct ll_node_t *next, *prev;
 } ll_node_t;
 
-// Structure for a linked list
+// Structure for a allocated blocks list
 typedef struct ll_list_t {
 	ll_node_t *head;
 	size_t size;

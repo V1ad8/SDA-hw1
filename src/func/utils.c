@@ -1,12 +1,24 @@
 #include "../header.h"
 
-bool is_power(size_t x)
+bool same_parent(size_t first_address, size_t second_address, void *heap_data,
+				 size_t bytes_per_list)
 {
-	for (size_t i = 8; i <= x; i = i << 1)
-		if (i == x)
-			return true;
+	// Calculate the virtual address of the two blocks
+	second_address -= (size_t)heap_data;
 
-	return false;
+	// Check if the two blocks are in the same list
+	if (first_address / bytes_per_list != second_address / bytes_per_list)
+		return false;
+
+	// Calculate the size of the list
+	size_t size = 8 * (1 << first_address / bytes_per_list);
+
+	// Calculate the position of the two blocks in the list
+	first_address = first_address % bytes_per_list;
+	second_address = second_address % bytes_per_list;
+
+	// Check if the two blocks are in the same parent block
+	return (first_address / size == second_address / size);
 }
 
 char *read_text(void)
@@ -35,6 +47,7 @@ char *read_text(void)
 	// Add the null terminator
 	text[i - 1] = '\0';
 
+	// Return the text
 	return text;
 }
 
@@ -75,7 +88,7 @@ void run(void)
 		} else if (!strcmp(command, "FREE")) {
 			// Free memory
 			free_f(&sfl_lists, &lists_num, &allocated_blocks, &free_calls,
-				   reconstruct_type, heap_data, start_address);
+				   reconstruct_type, heap_data, start_address, bytes_per_list);
 		} else if (!strcmp(command, "READ")) {
 			// Read the block
 			if (!read(allocated_blocks, heap_data, start_address, command,
