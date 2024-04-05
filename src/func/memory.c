@@ -26,9 +26,8 @@ void add_sfl_node(size_t block_address, size_t block_size,
 				(*sfl_lists)[j].head = new_sfl;
 			} else {
 				// Move to the appropriate position
-				while (last_sfl->next && last_sfl->next->data < new_sfl->data) {
+				while (last_sfl->next && last_sfl->next->data < new_sfl->data)
 					last_sfl = last_sfl->next;
-				}
 
 				// Add the current node to the segregated free list
 				new_sfl->next = last_sfl->next;
