@@ -1,8 +1,8 @@
 #include "../header.h"
 
-bool read(sfl_list_t allocated_blocks, void *heap_data, size_t start_address,
+bool read(list_t allocated_blocks, void *heap_data, size_t start_address,
 		  char *command, size_t free_calls, size_t fragmentations,
-		  size_t malloc_calls, sfl_list_t *sfl_lists, size_t lists_num)
+		  size_t malloc_calls, list_t *sfl_lists, size_t lists_num)
 {
 	// Declare the variables read for the input
 	size_t block_address, read_size;
@@ -24,7 +24,7 @@ bool read(sfl_list_t allocated_blocks, void *heap_data, size_t start_address,
 	size_t i = 0;
 
 	// Find the block with the given address
-	for (sfl_node_t *current = allocated_blocks.head; current;
+	for (node_t *current = allocated_blocks.head; current;
 		 current = current->next) {
 		// Check if the address is found
 		if (block_address !=
@@ -79,9 +79,9 @@ bool read(sfl_list_t allocated_blocks, void *heap_data, size_t start_address,
 	return false;
 }
 
-bool write(sfl_list_t allocated_blocks, void *heap_data, size_t start_address,
+bool write(list_t allocated_blocks, void *heap_data, size_t start_address,
 		   char *command, size_t free_calls, size_t fragmentations,
-		   size_t malloc_calls, sfl_list_t *sfl_lists, size_t lists_num)
+		   size_t malloc_calls, list_t *sfl_lists, size_t lists_num)
 {
 	// Declare the variables read for the input
 	size_t block_address, write_size;
@@ -105,7 +105,7 @@ bool write(sfl_list_t allocated_blocks, void *heap_data, size_t start_address,
 	size_t j = 0;
 
 	// Find the block with the given address
-	for (sfl_node_t *current = allocated_blocks.head; current;
+	for (node_t *current = allocated_blocks.head; current;
 		 current = current->next) {
 		// Check if the address is found
 		if (block_address !=
@@ -156,8 +156,8 @@ bool write(sfl_list_t allocated_blocks, void *heap_data, size_t start_address,
 }
 
 void dump_memory(size_t lists_num, size_t malloc_calls, size_t fragmentations,
-				 size_t free_calls, sfl_list_t *sfl_lists,
-				 sfl_list_t allocated_blocks, size_t start_address,
+				 size_t free_calls, list_t *sfl_lists,
+				 list_t allocated_blocks, size_t start_address,
 				 void *heap_data)
 {
 	printf("+++++DUMP+++++\n");
@@ -173,7 +173,7 @@ void dump_memory(size_t lists_num, size_t malloc_calls, size_t fragmentations,
 
 	// Calculate the total allocated memory
 	size_t allocated_memory = 0;
-	for (sfl_node_t *current = allocated_blocks.head; current;
+	for (node_t *current = allocated_blocks.head; current;
 		 current = current->next) {
 		allocated_memory += ((block_t *)current->data)->size;
 	}
@@ -197,7 +197,7 @@ void dump_memory(size_t lists_num, size_t malloc_calls, size_t fragmentations,
 			   ((block_t *)sfl_lists[i].head->data)->size, sfl_lists[i].size);
 
 		// Print the addresses of the free blocks
-		for (sfl_node_t *current = sfl_lists[i].head; current;
+		for (node_t *current = sfl_lists[i].head; current;
 			 current = current->next) {
 			printf("0x%lx", (size_t)((block_t *)current->data)->address -
 								(size_t)heap_data + start_address);
@@ -215,7 +215,7 @@ void dump_memory(size_t lists_num, size_t malloc_calls, size_t fragmentations,
 	if (allocated_blocks.head) {
 		printf(" ");
 
-		for (sfl_node_t *current = allocated_blocks.head; current;
+		for (node_t *current = allocated_blocks.head; current;
 			 current = current->next) {
 			printf("(0x%lx - %lu)",
 				   (size_t)((block_t *)current->data)->address -

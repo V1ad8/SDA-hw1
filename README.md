@@ -67,50 +67,36 @@ These source files are supported by three header files:
 * **src/structs.h**: includes all the libraries, definitions and structs used by the program
 * **src/utils.h** (borrowed from [the first lab skel](https://ocw.cs.pub.ro/courses/_media/sd-ca/laboratoare/lab01_recap_pc_skel.zip)): includes the definition of `DIE()`
 
-### Structs & enums used
+### Data Structures Used
 I used the following data structures:
 * bool
 ```c
 // Boolean type for the C language
 typedef enum { false, true } bool;
 ```
-* two doubly linked lists: sfl_list_t & ll_list_t
+* a doubly linked lists
 ```c
-// Structure for a segregated free list
-typedef struct sfl_list_t {
-	sfl_node_t *head; // The first node
-	size_t size; // The number of nodes in the list
-	size_t element_size; // The size of the elements in the list
-} sfl_list_t;
-
-// Structure for a allocated blocks list
-typedef struct ll_list_t {
-	ll_node_t *head; // The first node
-	size_t size; // The number of nodes in the list
-} ll_list_t;
-```
-* nodes for the lists: sfl_node_t & ll_node_t
-```c
-// Structure for a segregated free list
 // Structure for a node in the segregated free list
-typedef struct sfl_node_t {
-	void *data; // The data of the node(the address of the block)
-	struct sfl_node_t *next, *prev; // Pointers to the next/previous nodes
-} sfl_node_t;
+typedef struct node_t {
+	void *data; // The data of the node
+	struct node_t *next, *prev; // The next and previous nodes
+} node_t;
 
-// Structure for a node in the allocated blocks list
-typedef struct ll_node_t {
-	void *data; // The data of the node(the address of the block)
-	size_t size; // The size of the data in the node
-	struct ll_node_t *next, *prev; // Pointers to the next/previous nodes
-} ll_node_t;
+// Structure for a segregated free list
+typedef struct list_t {
+	node_t *head; // The head of the list
+	size_t size; // The size of the list
+} list_t;
 ```
-
-The first list stores the size of the elements withing the list, while the second one stores it within each node.
-
-The first one is a segregated free list, and the second one is the list of allocated blocks.
-
->**Note**: The data inside the nodes is a pointer to a real address from the memory. It only gets translated to the digital address when it is written(in the **DUMP_MEMORY** command) or when it is needed for searching in the lists and it is given in its digital form(in the **FREE**, **READ** and **WRITE** functions).
+>**Note**: The data inside the nodes is a pointer to a real address from the memory. It only gets translated to the digital address when it is written (in the **DUMP_MEMORY** command) or when it is needed for searching in the lists and it is given in its digital form(in the **FREE**, **READ** and **WRITE** functions).
+* a block structure
+```c
+// Structure for a block in the heap
+typedef struct block_t {
+	void *address; // The address of the block
+	size_t size; // The size of the block
+} block_t;
+```
 
 ## Implementation
 ### `run()`
@@ -194,7 +180,7 @@ The `destroy_heap()` function is called. It frees the memory used for:
 
 ## Personal Comments
 ### Do I believe I could have make a better implementation?
-Yes. I think it could have been implemented in a easier way. Like, instead of using the ll_list_t, to use a simple linked list, or maybe use just one struct for both functionalities. Also, i don't particularly like the way the code looks. The debugging process was very overly complicated. As proof of this, i quit before debugging the last test. I hope it is easier to understand than to debug, and I hope this README made the process easier.
+Yes. I think it could have been implemented in an easier way. I don't particularly like the way the code looks. The debugging process was very overly complicated. As proof of this, i quit before debugging the last test. I hope it is easier to understand than to debug, and I hope this README made the process easier.
 
 ### What did I learn from this homework?
 First of all, I learned how the memory works. Secondly, I learned how to use valgrind better and with more efficiency.

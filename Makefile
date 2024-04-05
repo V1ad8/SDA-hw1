@@ -3,7 +3,7 @@
 build: sfl
 
 sfl: src/main.c src/func/*.c
-	gcc -Wall -Wextra -std=c99 src/main.c src/func/*.c -o sfl
+	gcc -g -Wall -Wextra -std=c99 src/main.c src/func/*.c -o sfl
 
 run_sfl: sfl
 	./sfl

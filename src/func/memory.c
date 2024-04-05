@@ -1,8 +1,7 @@
 #include "../header.h"
 
-void malloc_f(sfl_list_t **sfl_lists, size_t *lists_num,
-			  sfl_list_t *allocated_blocks, size_t *fragmentations,
-			  size_t *malloc_calls)
+void malloc_f(list_t **sfl_lists, size_t *lists_num, list_t *allocated_blocks,
+			  size_t *fragmentations, size_t *malloc_calls)
 {
 	// Declare the variable for the block size
 	size_t block_size;
@@ -46,13 +45,13 @@ void malloc_f(sfl_list_t **sfl_lists, size_t *lists_num,
 	printf("Out of memory\n");
 }
 
-bool defragmented(size_t *lists_num, sfl_list_t **sfl_lists,
-				  size_t *block_address, size_t *block_size, void *heap_data,
-				  size_t start_address, size_t bytes_per_list)
+bool defragmented(size_t *lists_num, list_t **sfl_lists, size_t *block_address,
+				  size_t *block_size, void *heap_data, size_t start_address,
+				  size_t bytes_per_list)
 {
 	// Search for compatible blocks in the segregated free lists
 	for (size_t i = 0; i < *lists_num; i++) {
-		for (sfl_node_t *current = (*sfl_lists)[i].head; current;
+		for (node_t *current = (*sfl_lists)[i].head; current;
 			 current = current->next) {
 			// Check if the current node has the same parent block as the
 			// freed block
@@ -82,7 +81,7 @@ bool defragmented(size_t *lists_num, sfl_list_t **sfl_lists,
 			*block_size += ((block_t *)(*sfl_lists)[i].head->data)->size;
 
 			// Remove the current node from the segregated free list
-			if ((*sfl_lists)[i].head != current && current->prev)
+			if (((*sfl_lists)[i].head != current) && current->prev)
 				current->prev->next = current->next;
 			else
 				(*sfl_lists)[i].head = current->next;
@@ -104,8 +103,7 @@ bool defragmented(size_t *lists_num, sfl_list_t **sfl_lists,
 					(*sfl_lists)[j] = (*sfl_lists)[j + 1];
 
 				// Reallocate memory for the segregated free lists
-				*sfl_lists =
-					realloc(*sfl_lists, *lists_num * sizeof(sfl_list_t));
+				*sfl_lists = realloc(*sfl_lists, *lists_num * sizeof(list_t));
 				DIE(!sfl_lists, "Realloc failed while reallocating sfl_lists");
 			}
 
@@ -122,10 +120,9 @@ bool defragmented(size_t *lists_num, sfl_list_t **sfl_lists,
 	return false;
 }
 
-void free_f(sfl_list_t **sfl_lists, size_t *lists_num,
-			sfl_list_t *allocated_blocks, size_t *free_calls,
-			size_t reconstruct_type, void *heap_data, size_t start_address,
-			size_t bytes_per_list)
+void free_f(list_t **sfl_lists, size_t *lists_num, list_t *allocated_blocks,
+			size_t *free_calls, size_t reconstruct_type, void *heap_data,
+			size_t start_address, size_t bytes_per_list)
 {
 	// Declare the variable for the block address
 	size_t block_address;
@@ -144,8 +141,8 @@ void free_f(sfl_list_t **sfl_lists, size_t *lists_num,
 	}
 
 	// Find the block in the allocated blocks list
-	sfl_node_t *current_ll = remove_ll_node(allocated_blocks, block_address,
-											heap_data, start_address);
+	node_t *current_ll = remove_ll_node(allocated_blocks, block_address,
+										heap_data, start_address);
 	if (!current_ll) {
 		// Print an error message if the block was not found
 		printf("Invalid free\n");
