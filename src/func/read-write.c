@@ -1,6 +1,6 @@
 #include "../header.h"
 
-bool read(ll_list_t allocated_blocks, void *heap_data, size_t start_address,
+bool read(sfl_list_t allocated_blocks, void *heap_data, size_t start_address,
 		  char *command, size_t free_calls, size_t fragmentations,
 		  size_t malloc_calls, sfl_list_t *sfl_lists, size_t lists_num)
 {
@@ -24,16 +24,20 @@ bool read(ll_list_t allocated_blocks, void *heap_data, size_t start_address,
 	size_t i = 0;
 
 	// Find the block with the given address
-	for (ll_node_t *current = allocated_blocks.head; current;
+	for (sfl_node_t *current = allocated_blocks.head; current;
 		 current = current->next) {
 		// Check if the address is found
 		if (block_address !=
-			(size_t)current->data - (size_t)heap_data + start_address)
+			(size_t)((block_t *)(size_t)current->data)->address -
+				(size_t)heap_data + start_address)
 			continue;
 
 		// Copy the data from the allocated memory to the text
-		for (i = 0, read = 0; i < read_size && i < current->size; i++, read++)
-			text[j++] = *((char *)current->data + i);
+		for (i = 0, read = 0;
+			 i < read_size && i < ((block_t *)(size_t)current->data)->size;
+			 i++, read++)
+			text[j++] =
+				*((char *)((block_t *)(size_t)current->data)->address + i);
 
 		// Update the size and address
 		read_size -= read;
@@ -75,7 +79,7 @@ bool read(ll_list_t allocated_blocks, void *heap_data, size_t start_address,
 	return false;
 }
 
-bool write(ll_list_t allocated_blocks, void *heap_data, size_t start_address,
+bool write(sfl_list_t allocated_blocks, void *heap_data, size_t start_address,
 		   char *command, size_t free_calls, size_t fragmentations,
 		   size_t malloc_calls, sfl_list_t *sfl_lists, size_t lists_num)
 {
@@ -101,17 +105,21 @@ bool write(ll_list_t allocated_blocks, void *heap_data, size_t start_address,
 	size_t j = 0;
 
 	// Find the block with the given address
-	for (ll_node_t *current = allocated_blocks.head; current;
+	for (sfl_node_t *current = allocated_blocks.head; current;
 		 current = current->next) {
 		// Check if the address is found
 		if (block_address !=
-			(size_t)current->data - (size_t)heap_data + start_address)
+			(size_t)((block_t *)(size_t)current->data)->address -
+				(size_t)heap_data + start_address)
 			continue;
 
 		// Copy the data from the text to the allocated memory
-		for (i = 0; i < write_size && i < current->size && i < text_size;
+		for (i = 0;
+			 i < write_size && i < ((block_t *)(size_t)current->data)->size &&
+			 i < text_size;
 			 i++, j++) {
-			*((char *)current->data + i) = text[j];
+			*((char *)((block_t *)(size_t)current->data)->address + i) =
+				text[j];
 		}
 
 		// Update the size, address and text size
@@ -149,7 +157,7 @@ bool write(ll_list_t allocated_blocks, void *heap_data, size_t start_address,
 
 void dump_memory(size_t lists_num, size_t malloc_calls, size_t fragmentations,
 				 size_t free_calls, sfl_list_t *sfl_lists,
-				 ll_list_t allocated_blocks, size_t start_address,
+				 sfl_list_t allocated_blocks, size_t start_address,
 				 void *heap_data)
 {
 	printf("+++++DUMP+++++\n");
@@ -159,14 +167,15 @@ void dump_memory(size_t lists_num, size_t malloc_calls, size_t fragmentations,
 	size_t free_memory = 0;
 	for (size_t i = 0; i < lists_num; i++) {
 		free_blocks += sfl_lists[i].size;
-		free_memory += sfl_lists[i].size * sfl_lists[i].element_size;
+		free_memory +=
+			sfl_lists[i].size * ((block_t *)sfl_lists[i].head->data)->size;
 	}
 
 	// Calculate the total allocated memory
 	size_t allocated_memory = 0;
-	for (ll_node_t *current = allocated_blocks.head; current;
+	for (sfl_node_t *current = allocated_blocks.head; current;
 		 current = current->next) {
-		allocated_memory += current->size;
+		allocated_memory += ((block_t *)current->data)->size;
 	}
 
 	// Print the total memory, total allocated memory, total free memory,
@@ -185,13 +194,13 @@ void dump_memory(size_t lists_num, size_t malloc_calls, size_t fragmentations,
 	// Print blocks with their respective sizes and number of free blocks
 	for (size_t i = 0; i < lists_num; i++) {
 		printf("Blocks with %lu bytes - %lu free block(s) : ",
-			   sfl_lists[i].element_size, sfl_lists[i].size);
+			   ((block_t *)sfl_lists[i].head->data)->size, sfl_lists[i].size);
 
 		// Print the addresses of the free blocks
 		for (sfl_node_t *current = sfl_lists[i].head; current;
 			 current = current->next) {
-			printf("0x%lx",
-				   (size_t)current->data - (size_t)heap_data + start_address);
+			printf("0x%lx", (size_t)((block_t *)current->data)->address -
+								(size_t)heap_data + start_address);
 
 			// Print a space if there are more blocks
 			if (current->next)
@@ -206,11 +215,12 @@ void dump_memory(size_t lists_num, size_t malloc_calls, size_t fragmentations,
 	if (allocated_blocks.head) {
 		printf(" ");
 
-		for (ll_node_t *current = allocated_blocks.head; current;
+		for (sfl_node_t *current = allocated_blocks.head; current;
 			 current = current->next) {
 			printf("(0x%lx - %lu)",
-				   (size_t)current->data - (size_t)heap_data + start_address,
-				   current->size);
+				   (size_t)((block_t *)current->data)->address -
+					   (size_t)heap_data + start_address,
+				   ((block_t *)current->data)->size);
 
 			// Print a space if there are more blocks
 			if (current->next)

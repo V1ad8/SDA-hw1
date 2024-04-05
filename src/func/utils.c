@@ -56,7 +56,7 @@ void run(void)
 	// Initialize the lists and the heap data
 	sfl_list_t *sfl_lists = NULL;
 	void *heap_data = NULL;
-	ll_list_t allocated_blocks = { NULL, 0 };
+	sfl_list_t allocated_blocks = { NULL, 0 };
 
 	// Initialize the memory statistics
 	size_t malloc_calls = 0;
