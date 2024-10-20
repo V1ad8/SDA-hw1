@@ -4,7 +4,7 @@
 
 ## Task Description
 
-The program si a virtual memory allocator, written in C, based on doubly linked list. Because of this, the free blocks are stored in an array of lists, and the allocated blocks are stored in another type of list. Both of the types of lists contain nodes which contain pointers to a specific area of memory, stored within a variable with a large enough dimension to ensure that each node's pointer is unique. Also, both of the types of lists are kept sorted for ease of access and printing purposes.
+The program is a virtual memory allocator, written in C, based on doubly linked list. Because of this, the free blocks are stored in an array of lists, and the allocated blocks are stored in another type of list. Both of the types of lists contain nodes which contain pointers to a specific area of memory, stored within a variable with a large enough dimension to ensure that each node's pointer is unique. Also, both of the types of lists are kept sorted for ease of access and printing purposes.
 
 ### Functionalities
 The program provides the following functionalities:
